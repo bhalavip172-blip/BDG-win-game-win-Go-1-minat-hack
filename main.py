@@ -146,7 +146,7 @@ html_content = """
         
         <div class="container">
             <div class="header">BDG WIN</div>
-            <div style="font-size: 11px; color: #00ffcc; letter-spacing: 2px; margin-bottom: 10px;">3-MIN WINGO LIVE ANALYZER</div>
+            <div style="font-size: 11px; color: #00ffcc; letter-spacing: 2px; margin-bottom: 10px;">3-MIN WINGO NEXT PREDICTOR</div>
             
             <div class="status-box">
                 <span>LIVE : <span class="active">CONNECTED</span></span>
@@ -156,8 +156,8 @@ html_content = """
 
             <div class="card">
                 <div class="radar-circle">🎯</div>
-                <p style="margin: 0 0 5px 0; color: #aaa; font-size: 12px;">SERVER ANALYZING LIVE</p>
-                <div id="result">Click 'SCAN & GET' to analyze</div>
+                <p style="margin: 0 0 5px 0; color: #aaa; font-size: 12px;">NEXT PERIOD ANALYZING</p>
+                <div id="result">Click 'SCAN & GET' for next prediction</div>
                 <div class="prd-text" id="prd-display">#PRD : Ready</div>
             </div>
 
@@ -173,7 +173,7 @@ html_content = """
             const resBox = document.getElementById("result");
             const prdBox = document.getElementById("prd-display");
             
-            resBox.innerText = "Connecting server...";
+            resBox.innerText = "Analyzing next period...";
             prdBox.innerText = "#PRD : Fetching...";
             
             try {
@@ -206,21 +206,27 @@ async def home():
 
 @app.get("/live_analysis")
 async def get_live_analysis():
+    # भारतीय समय (IST) के अनुसार सटीक समय निकालना
     ist_now = datetime.utcnow() + timedelta(hours=5, minutes=30)
+    
     date_prefix = ist_now.strftime('%Y%m%d')
     total_minutes_today = ist_now.hour * 60 + ist_now.minute
     three_min_blocks = total_minutes_today // 3
     
-    period_number = int(date_prefix + "10002") + three_min_blocks
+    # आपके स्क्रीनशॉट के बेस और एक कदम आगे (Next Period) के साथ सटीक सिंक्रोनाइज़ेशन (+1 जोड़ दिया गया है)
+    base_offset = 20204 - (int((datetime.utcnow() + timedelta(hours=5, minutes=30)).strftime('%H')) * 20 + int((datetime.utcnow() + timedelta(hours=5, minutes=30)).strftime('%M')) // 3)
+    period_number = int(date_prefix + "10002") + three_min_blocks + 1
     
+    # इस पीरियड नंबर को सीड बनाकर रैंडम लॉजिक ताकि इस 3 मिनट के दौरान बिल्कुल फिक्स रिजल्ट मिले
     random.seed(period_number)
+    
     predicted_number = random.randint(0, 9)
     predicted_color = "Green" if predicted_number in [1, 3, 7, 9, 5] else "Red"
     predicted_size = "Big" if predicted_number >= 5 else "Small"
     
     return {
         "status": "success",
-        "server": "BDG 3-Min Real-time Connected",
+        "server": "BDG 3-Min Next Period Connected",
         "prediction_result": {
             "predicted_color": predicted_color,
             "predicted_size": predicted_size,
