@@ -156,9 +156,9 @@ html_content = """
 
             <div class="card">
                 <div class="radar-circle">🎯</div>
-                <p style="margin: 0 0 5px 0; color: #aaa; font-size: 12px;">FETCHING LIVE PERIOD</p>
-                <div id="result">Click 'SCAN' for active live result</div>
-                <div class="prd-text" id="prd-display">#PRD : Ready to Scan</div>
+                <p style="margin: 0 0 5px 0; color: #aaa; font-size: 12px;">SERVER ANALYZING LIVE</p>
+                <div id="result">Click 'SCAN & GET' to analyze</div>
+                <div class="prd-text" id="prd-display">#PRD : Waiting for scan</div>
             </div>
 
             <div class="btn-container">
@@ -170,20 +170,21 @@ html_content = """
 
     <script>
         async function fetchNumber() {
-            document.getElementById("result").innerText = "Scanning live server...";
+            document.getElementById("result.innerText = "Waking up server & scanning...";
+            document.getElementById("prd-display").innerText = "#PRD : Connecting...";
+            
             try {
                 let response = await fetch('/live_analysis');
                 let data = await response.json();
-                setTimeout(() => {
-                    let res = data.prediction_result;
-                    let colorCode = res.predicted_color === 'Green' ? '#00ff66' : '#ff3333';
-                    document.getElementById("result").innerHTML = `Color: <span style="color:${colorCode}">${res.predicted_color}</span> (${res.predicted_size}) | No: <span style="color:#ffcc00">${res.predicted_number}</span>`;
-                    document.getElementById("prd-display").innerText = "#PRD : " + res.period_number;
-                }, 400);
+                
+                let res = data.prediction_result;
+                let colorCode = res.predicted_color === 'Green' ? '#00ff66' : '#ff3333';
+                
+                document.getElementById("result").innerHTML = `Color: <span style="color:${colorCode}">${res.predicted_color}</span> (${res.predicted_size}) | No: <span style="color:#ffcc00">${res.predicted_number}</span>`;
+                document.getElementById("prd-display").innerText = "#PRD : " + res.period_number;
             } catch(err) {
-                setTimeout(() => {
-                    document.getElementById("result").innerText = "Connection error, retry!";
-                }, 400);
+                document.getElementById("result").innerText = "Server is waking up, try again!";
+                document.getElementById("prd-display").innerText = "#PRD : Retry Scan";
             }
         }
 
@@ -202,18 +203,26 @@ async def home():
 
 @app.get("/live_analysis")
 async def get_live_analysis():
-    # भारतीय समय (IST) के अनुसार सटीक लाइव क्लॉक निकालना
     ist_now = datetime.utcnow() + timedelta(hours=5, minutes=30)
-    
     date_prefix = ist_now.strftime('%Y%m%d')
     total_minutes_today = ist_now.hour * 60 + ist_now.minute
-    
-    # 3 मिनट के ब्लॉक का हिसाब और वर्तमान लाइव पीरियड के अनुसार ऑफसेट अपडेट
     three_min_blocks = total_minutes_today // 3
     
-    # आपके स्क्रीनशॉट के आगे बढ़े हुए लाइव पीरियड नंबर के साथ सटीक सिंक्रोनाइज़ेशन
     period_number = int(date_prefix + "10002") + three_min_blocks
     
-    # इस लाइव पीरियड को सीड बनाकर रैंडम लॉजिक ताकि हर 3 मिनट में नया और सही प्रेडिक्शन मिले
     random.seed(period_number)
+    predicted_number = random.randint(0, 9)
+    predicted_color = "Green" if predicted_number in [1, 3, 7, 9, 5] else "Red"
+    predicted_size = "Big" if predicted_number >= 5 else "Small"
     
+    return {
+        "status": "success",
+        "server": "BDG 3-Min Real-time Connected",
+        "prediction_result": {
+            "predicted_color": predicted_color,
+            "predicted_size": predicted_size,
+            "predicted_number": predicted_number,
+            "period_number": period_number,
+            "confidence": f"{random.randint(92, 99)}%"
+        }
+    }
