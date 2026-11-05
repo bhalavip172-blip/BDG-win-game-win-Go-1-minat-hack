@@ -158,7 +158,7 @@ html_content = """
                 <div class="radar-circle">🎯</div>
                 <p style="margin: 0 0 5px 0; color: #aaa; font-size: 12px;">SERVER ANALYZING LIVE</p>
                 <div id="result">Click 'SCAN & GET' to analyze</div>
-                <div class="prd-text" id="prd-display">#PRD : Waiting for scan</div>
+                <div class="prd-text" id="prd-display">#PRD : Ready</div>
             </div>
 
             <div class="btn-container">
@@ -170,8 +170,11 @@ html_content = """
 
     <script>
         async function fetchNumber() {
-            document.getElementById("result.innerText = "Waking up server & scanning...";
-            document.getElementById("prd-display").innerText = "#PRD : Connecting...";
+            const resBox = document.getElementById("result");
+            const prdBox = document.getElementById("prd-display");
+            
+            resBox.innerText = "Connecting server...";
+            prdBox.innerText = "#PRD : Fetching...";
             
             try {
                 let response = await fetch('/live_analysis');
@@ -180,11 +183,11 @@ html_content = """
                 let res = data.prediction_result;
                 let colorCode = res.predicted_color === 'Green' ? '#00ff66' : '#ff3333';
                 
-                document.getElementById("result").innerHTML = `Color: <span style="color:${colorCode}">${res.predicted_color}</span> (${res.predicted_size}) | No: <span style="color:#ffcc00">${res.predicted_number}</span>`;
-                document.getElementById("prd-display").innerText = "#PRD : " + res.period_number;
-            } catch(err) {
-                document.getElementById("result").innerText = "Server is waking up, try again!";
-                document.getElementById("prd-display").innerText = "#PRD : Retry Scan";
+                resBox.innerHTML = `Color: <span style="color:${colorCode}">${res.predicted_color}</span> (${res.predicted_size}) | No: <span style="color:#ffcc00">${res.predicted_number}</span>`;
+                prdBox.innerText = "#PRD : " + res.period_number;
+            } catch(e) {
+                resBox.innerText = "Error! Try again.";
+                prdBox.innerText = "#PRD : Failed";
             }
         }
 
