@@ -1,5 +1,4 @@
 fastapi
-requests
 uvicorn
-click
-pandas
+python-multipart
+
