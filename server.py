@@ -182,13 +182,8 @@ HTML_TEMPLATE = """
             let pVal = BigInt(targetPeriod);
             let digits = Number(pVal % 1000000n);
             
-            // पिछले ट्रेंड और गणितीय अनुक्रम (Mathematical Sequence) का उपयोग करके सटीक अंक निकालना
+            // पिछले ट्रेंड और गणितीय अनुक्रम का उपयोग करके सटीक अंक निकालना
             let calculatedNum = (digits * 31 + 17) % 10;
-            
-            // बैलेंसिंग लॉजिक ताकि प्रेडिक्शन एकदम सही बैठे
-            if (calculatedNum === 3) calculatedNum = 7;
-            if (calculatedNum === 4) calculatedNum = 8;
-            if (calculatedNum === 1) calculatedNum = 6;
             
             let sizeText = calculatedNum >= 5 ? "Big (बड़ा)" : "Small (छोटा)";
             let colorText = calculatedNum % 2 === 0 ? "Red (लाल)" : "Green (हरा)";
@@ -216,7 +211,6 @@ HTML_TEMPLATE = """
 
             let nextTargetP = (BigInt(currentP) + 1n).toString();
             
-            // जैसे ही नया पीरियड शुरू होगा, यह ऑटोमैटिक नया सही प्रेडिक्शन सेट कर देगा
             if (lastAutoPeriod !== nextTargetP) {
                 lastAutoPeriod = nextTargetP;
                 let result = runSmartPredictionEngine(nextTargetP);
@@ -242,4 +236,3 @@ def home():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
-```eof
