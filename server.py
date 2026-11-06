@@ -75,14 +75,22 @@ def home_page():
             .info-row {
                 display: flex;
                 justify-content: space-between;
-                margin-bottom: 4px;
+                align-items: center;
+                margin-bottom: 6px;
                 font-size: 11px;
                 color: #94a3b8;
             }
 
-            .info-val {
+            .info-input {
+                background: #0f172a;
+                border: 1px solid #3b82f6;
                 color: #60a5fa;
+                padding: 4px 6px;
+                border-radius: 4px;
+                font-size: 12px;
                 font-weight: bold;
+                width: 150px;
+                text-align: right;
             }
 
             .scan-btn {
@@ -126,35 +134,24 @@ def home_page():
             }
         </style>
         <script>
-            // सीधे UTC टाइम और मिनट के हिसाब से 100% सटीक लाइव पीरियड और अगला टारगेट पीरियड ऑटोमैटिक कैलकुलेट करने का कोड
-            function fetchGameLivePeriod() {
-                try {
-                    const now = new Date();
-                    const year = now.getUTCFullYear();
-                    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-                    const day = String(now.getUTCDate()).padStart(2, '0');
-                    const hours = String(now.getUTCHours()).padStart(2, '0');
-                    const minutes = String(now.getUTCMinutes()).padStart(2, '0');
-                    
-                    // गेम के फॉर्मेट के अनुसार बेस पीरियड नंबर बनाना (जैसे 202611061000...)
-                    let basePeriodNum = BigInt(year + month + day + "1000" + hours + minutes);
-                    
-                    // वर्तमान लाइव पीरियड और अगला टारगेट पीरियड
-                    let livePeriodStr = basePeriodNum.toString();
-                    let nextTargetStr = (basePeriodNum + 1n).toString();
-
-                    document.getElementById('display_period').innerText = livePeriodStr;
-                    document.getElementById('next_period_hidden').value = nextTargetStr;
-
-                } catch(e) {
-                    console.log("Time sync error");
+            // गेम के लाइव पीरियड को मैन्युअल या आसानी से सेट और प्रेडिक्ट करने का परफेक्ट लॉजिक
+            function incrementLivePeriod() {
+                const inputElem = document.getElementById('manual_live_period');
+                let val = inputElem.value.trim();
+                if(!isNaN(val) && val.length > 5) {
+                    inputElem.value = (BigInt(val) + 1n).toString();
                 }
             }
 
             async function triggerAutoScan() {
-                // हमेशा असली कैलकुलेटेड अगले पीरियड को ही भेजें
-                const targetPeriod = document.getElementById('next_period_hidden').value;
-                if(!targetPeriod || targetPeriod === "Waiting...") return;
+                const livePeriod = document.getElementById('manual_live_period').value.trim();
+                if(!livePeriod || isNaN(livePeriod)) {
+                    alert('कृपया सही लाइव पीरियड नंबर दर्ज करें!');
+                    return;
+                }
+
+                // वर्तमान लाइव पीरियड में +1 जोड़कर अगला टारगेट पीरियड निकालना
+                const targetPeriod = (BigInt(livePeriod) + 1n).toString();
 
                 const formData = new FormData();
                 formData.append('period_number', targetPeriod);
@@ -172,14 +169,12 @@ def home_page():
                             '<b>🎯 सटीक प्रेडिक्टेड नंबर:</b> <span class="highlight" style="font-size:15px;">' + data.prediction.exact_number + '</span><br>' +
                             '<b>📊 साइज:</b> <span class="highlight">' + data.prediction.size + '</span><br>' +
                             '<b>🎨 कलर:</b> <span class="highlight">' + data.prediction.color + '</span><br>' +
-                            '<b>⚡ मोड:</b> 100% Real-Sync Active';
+                            '<b>⚡ मोड:</b> 100% Manual-Sync Active';
                     }
                 } catch(err) {
                     console.log('Sync error');
                 }
             }
-
-            setInterval(fetchGameLivePeriod, 1000);
 
             function toggleWidget() {
                 const body = document.getElementById('widgetBody');
@@ -191,8 +186,6 @@ def home_page():
 
         <iframe id="gameFrame" src="https://www.dmplay20.com/#/register?invitationCode=61385166635" class="game-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
 
-        <input type="hidden" id="next_period_hidden" value="">
-
         <div class="ai-widget">
             <div class="widget-header" onclick="toggleWidget()">
                 <span>🤖 Real-Sync AI Scanner</span>
@@ -202,11 +195,11 @@ def home_page():
                 <div class="info-box">
                     <div class="info-row">
                         <span>गेम का लाइव पीरियड:</span>
-                        <span class="info-val" id="display_period">Detecting...</span>
+                        <input type="text" id="manual_live_period" class="info-input" value="20261106100010414" placeholder="यहाँ डालें...">
                     </div>
                     <div class="info-row">
                         <span>स्कैनर स्टेटस:</span>
-                        <span class="info-val" style="color: #10b981;">Synced & Ready ⚡</span>
+                        <span class="info-val" style="color: #10b981; cursor:pointer;" onclick="incrementLivePeriod()">[ +1 अगला पीरियड ] ⚡</span>
                     </div>
                 </div>
 
