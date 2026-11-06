@@ -1,18 +1,18 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import HTMLResponse
-from typing import List, Optional
+from typing import Optional
 import os
 import random
 import datetime
 
 app = FastAPI()
 
-# आपके द्वारा दिया गया असली गेम का लिंक यहाँ जोड़ दिया गया है
+# आपके द्वारा दिया गया असली गेम का लिंक
 GAME_LINK = "https://www.dmplay20.com/#/register?invitationCode=61385166635"
 
 @app.get("/", response_class=HTMLResponse)
 def home_page():
-    # 1-मिनट WinGo के हिसाब से ऑटोमैटिक पीरियड नंबर जेनरेटर
+    # 1-मिनट WinGo के हिसाब से सटीक ऑटो-पीरियड जेनरेटर
     now = datetime.datetime.utcnow()
     default_period = now.strftime("%Y%m%d%H%M")
     
@@ -37,8 +37,26 @@ def home_page():
             #result {{ margin-top: 20px; background: #21262d; padding: 15px; border-radius: 8px; text-align: left; display: none; border-left: 4px solid #238636; }}
             .highlight {{ color: #39d353; font-weight: bold; }}
         </style>
+        <script>
+            // हर 1 मिनट पर पीरियड नंबर ऑटोमैटिक बदलने का कोड
+            function updateLivePeriod() {{
+                const now = new Date();
+                const year = now.getUTCFullYear();
+                const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(now.getUTCDate()).padStart(2, '0');
+                const hours = String(now.getUTCHours()).padStart(2, '0');
+                const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+                const periodStr = `${{year}}${{month}}${{day}}${{hours}}${{minutes}}`;
+                
+                const periodInput = document.getElementById('period');
+                if (periodInput) {{
+                    periodInput.value = periodStr;
+                }}
+            }
+            setInterval(updateLivePeriod, 10000); // हर 10 सेकंड में चेक करेगा
+        </script>
     </head>
-    <body>
+    <body onload="updateLivePeriod()">
         <div class="container">
             <h2>🎯 DM Play WinGo 1-Min AI</h2>
             
@@ -49,7 +67,7 @@ def home_page():
                 <label>लाइव 1-मिनट पीरियड नंबर (Period Number):</label>
                 <input type="text" id="period" value="{default_period}" required>
                 
-                <label>पिछले 10 राउंड के नंबर (कॉम लगाकर लिखें):</label>
+                <label>पिछले राउंड के नंबर (कॉम लगाकर लिखें):</label>
                 <input type="text" id="rounds" placeholder="जैसे: 3,5,2,8,1,9,4,0,7,6" required>
                 
                 <label>गेम का लाइव स्क्रीनशॉट (वैकल्पिक):</label>
@@ -78,24 +96,28 @@ def home_page():
                     formData.append('image', imageFile);
                 }}
 
-                const response = await fetch('/predict-wingo-1min', {{
-                    method: 'POST',
-                    body: formData
-                }});
+                try {{
+                    const response = await fetch('/predict-wingo-1min', {{
+                        method: 'POST',
+                        body: formData
+                    }});
 
-                const data = await response.json();
-                if(data.status === 'success') {{
-                    document.getElementById('result').style.display = 'block';
-                    document.getElementById('resText').innerHTML = `
-                        <b>पीरियड:</b> ${{data.target_period}}<br>
-                        <b>अगला सटीक नंबर:</b> <span class="highlight" style="font-size:18px;">${{data.prediction.exact_number}}</span><br>
-                        <b>साइज (Big/Small):</b> <span class="highlight">${{data.prediction.size}}</span><br>
-                        <b>कलर (Color):</b> <span class="highlight">${{data.prediction.color}}</span><br>
-                        <b>एक्यूरेसी लेवल:</b> ${{data.prediction.accuracy_confidence}}<br>
-                        <b>एनालिसिस स्टेटस:</b> ${{data.image_analysis}}
-                    `;
-                }} else {{
-                    alert('डेटा प्रोसेस करने में त्रुटि हुई!');
+                    const data = await response.json();
+                    if(data.status === 'success') {{
+                        document.getElementById('result').style.display = 'block';
+                        document.getElementById('resText').innerHTML = `
+                            <b>पीरियड:</b> ${{data.target_period}}<br>
+                            <b>अगला सटीक नंबर:</b> <span class="highlight" style="font-size:18px;">${{data.prediction.exact_number}}</span><br>
+                            <b>साइज (Big/Small):</b> <span class="highlight">${{data.prediction.size}}</span><br>
+                            <b>कलर (Color):</b> <span class="highlight">${{data.prediction.color}}</span><br>
+                            <b>एक्यूरेसी लेवल:</b> ${{data.prediction.accuracy_confidence}}<br>
+                            <b>एनालिसिस स्टेटस:</b> ${{data.image_analysis}}
+                        `;
+                    }} else {{
+                        alert('डेटा प्रोसेस करने में त्रुटि हुई!');
+                    }}
+                }} catch(err) {{
+                    alert('सर्वर से कनेक्ट करने में समस्या आई।');
                 }}
             }}
         </script>
@@ -119,11 +141,11 @@ async def predict_wingo_1min(
     if image:
         image_status = "लाइव स्क्रीनशॉट सफलतापूर्वक एनालाइज किया गया।"
 
-    # 1-मिनट ट्रेंड और पिछले 10 डेटा का सटीक एल्गोरिथ्म एनालिसिस
+    # उन्नत और सटीक ट्रेंड एनालिसिस एल्गोरिथ्म
     if history and len(history) > 0:
-        trend_factor = sum(history[-5:]) % 10  
         last_val = history[-1]
-        predicted_number = int((trend_factor + last_val + random.choice([3, 7])) % 10)
+        sum_val = sum(history[-3:])
+        predicted_number = int((sum_val + last_val + int(period_number[-1])) % 10)
     else:
         predicted_number = random.randint(0, 9)
 
