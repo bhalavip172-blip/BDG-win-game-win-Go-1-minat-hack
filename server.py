@@ -7,27 +7,22 @@ import datetime
 
 app = FastAPI()
 
-# आपका असली गेम लिंक जिसे फ्रेम के अंदर लोड किया जाएगा
 GAME_LINK = "https://www.dmplay20.com/#/register?invitationCode=61385166635"
 
 @app.get("/", response_class=HTMLResponse)
 def home_page():
-    now = datetime.datetime.utcnow()
-    default_period = now.strftime("%Y%m%d%H%M")
-    
-    html_content = f"""
+    html_content = """
     <!DOCTYPE html>
     <html lang="hi">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>DM Play WinGo - AI In-Game Scanner & Predictor</title>
+        <title>DM Play WinGo - In-Game AI Scanner</title>
         <style>
-            * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-            body, html {{ width: 100%; height: 100%; overflow: hidden; background: #0d1117; font-family: Arial, sans-serif; }}
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: Arial, sans-serif; }
             
-            /* गेम को पूरे पर्दे पर दिखाने के लिए */
-            .game-frame {{
+            .game-frame {
                 width: 100%;
                 height: 100vh;
                 border: none;
@@ -35,106 +30,106 @@ def home_page():
                 top: 0;
                 left: 0;
                 z-index: 1;
-            }}
+            }
 
-            /* कोने में तैरने वाला Floating AI Scanner Widget */
-            .ai-widget {{
+            .ai-widget {
                 position: fixed;
-                top: 15px;
-                right: 15px;
-                width: 300px;
-                background: rgba(13, 17, 23, 0.96);
-                backdrop-filter: blur(10px);
-                border: 2px solid #238636;
-                border-radius: 12px;
+                top: 10px;
+                right: 10px;
+                width: 290px;
+                background: rgba(15, 23, 42, 0.96);
+                backdrop-filter: blur(12px);
+                border: 2px solid #10b981;
+                border-radius: 10px;
                 z-index: 99999;
                 color: #ffffff;
-                box-shadow: 0 10px 35px rgba(0,0,0,0.85);
+                box-shadow: 0 8px 30px rgba(0,0,0,0.9);
                 font-size: 12px;
-            }}
+            }
 
-            .widget-header {{
-                background: #238636;
-                padding: 10px 12px;
+            .widget-header {
+                background: #10b981;
+                padding: 8px 10px;
                 font-weight: bold;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                border-top-left-radius: 10px;
-                border-top-right-radius: 10px;
+                border-top-left-radius: 8px;
+                border-top-right-radius: 8px;
                 cursor: pointer;
-                font-size: 13px;
-            }}
+                font-size: 12px;
+                color: #000;
+            }
 
-            .widget-body {{
-                padding: 12px;
-            }}
+            .widget-body {
+                padding: 10px;
+            }
 
-            .row-data {{
-                margin-bottom: 8px;
-            }}
+            .row-data {
+                margin-bottom: 6px;
+            }
 
-            .row-data label {{
+            .row-data label {
                 display: block;
-                color: #8b949e;
-                margin-bottom: 3px;
-                font-size: 11px;
-            }}
+                color: #94a3b8;
+                margin-bottom: 2px;
+                font-size: 10px;
+            }
 
-            .row-data input {{
+            .row-data input {
                 width: 100%;
-                padding: 7px;
-                background: #010409;
-                border: 1px solid #30363d;
-                color: #39d353;
-                border-radius: 6px;
+                padding: 5px;
+                background: #020617;
+                border: 1px solid #334155;
+                color: #34d399;
+                border-radius: 4px;
                 font-weight: bold;
-                font-size: 13px;
-            }}
+                font-size: 12px;
+            }
 
-            .scan-btn {{
+            .scan-btn {
                 width: 100%;
-                background: linear-gradient(135deg, #238636, #2ea043);
+                background: linear-gradient(135deg, #059669, #10b981);
                 color: #fff;
                 border: none;
-                padding: 10px;
+                padding: 8px;
                 font-weight: bold;
-                border-radius: 6px;
+                border-radius: 5px;
                 cursor: pointer;
-                margin-top: 5px;
-                font-size: 13px;
-                box-shadow: 0 4px 12px rgba(35, 134, 54, 0.4);
-                transition: 0.2s;
-            }}
+                margin-top: 4px;
+                font-size: 12px;
+                box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+            }
 
-            .scan-btn:active {{
-                transform: scale(0.97);
-            }}
+            .scan-btn:active {
+                transform: scale(0.98);
+            }
 
-            .prediction-box {{
-                margin-top: 10px;
-                background: #161b22;
-                padding: 10px;
-                border-radius: 8px;
-                border-left: 4px solid #39d353;
+            .prediction-box {
+                margin-top: 8px;
+                background: #020617;
+                padding: 8px;
+                border-radius: 6px;
+                border-left: 3px solid #10b981;
                 display: none;
-            }}
+            }
 
-            .highlight {{
-                color: #39d353;
+            .highlight {
+                color: #34d399;
                 font-weight: bold;
-            }}
+            }
 
-            .toggle-btn {{
+            .toggle-btn {
                 background: none;
                 border: none;
-                color: #fff;
-                font-size: 14px;
+                color: #000;
+                font-size: 12px;
+                font-weight: bold;
                 cursor: pointer;
-            }}
+            }
         </style>
         <script>
-            function autoLivePeriod() {{
+            function autoLivePeriod() {
                 const now = new Date();
                 const year = now.getUTCFullYear();
                 const month = String(now.getUTCMonth() + 1).padStart(2, '0');
@@ -144,42 +139,36 @@ def home_page():
                 const periodStr = year + month + day + hours + minutes;
                 
                 const pInput = document.getElementById('live_period');
-                if (pInput) {{
+                if (pInput) {
                     pInput.value = periodStr;
-                }}
+                }
             }
-            setInterval(autoLivePeriod, 5000);
+            setInterval(autoLivePeriod, 1000);
 
-            function toggleWidget() {{
+            function toggleWidget() {
                 const body = document.getElementById('widgetBody');
-                if (body.style.display === 'none') {{
-                    body.style.display = 'block';
-                }} else {{
-                    body.style.display = 'none';
-                }}
-            }}
+                body.style.display = (body.style.display === 'none') ? 'block' : 'none';
+            }
         </script>
     </head>
     <body onload="autoLivePeriod()">
 
-        <!-- गेम का ओरिजिनल पेज सीधे अंदर एम्बेड किया गया है -->
-        <iframe src="{GAME_LINK}" class="game-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        <iframe src="https://www.dmplay20.com/#/register?invitationCode=61385166635" class="game-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
 
-        <!-- कोने में तैरने वाला लाइव स्कैन और हैक पैनल -->
         <div class="ai-widget">
             <div class="widget-header" onclick="toggleWidget()">
-                <span>⚡ AI In-Game Live Scanner</span>
-                <button class="toggle-btn">➖</button>
+                <span>⚡ In-Game AI Scanner</span>
+                <button class="toggle-btn">[ - ]</button>
             </div>
             <div class="widget-body" id="widgetBody">
                 <form id="hackForm" onsubmit="runLiveScan(event)">
                     <div class="row-data">
                         <label>लाइव 1-मिनट पीरियड नंबर:</label>
-                        <input type="text" id="live_period" value="{default_period}" required>
+                        <input type="text" id="live_period" required>
                     </div>
                     <div class="row-data">
-                        <label>पिछले 10 राउंड्स (कॉमा से अलग):</label>
-                        <input type="text" id="live_rounds" value="4,8,2,9,1,6,3,5,0,7" required>
+                        <label>पिछले 10 राउंड्स (कॉमा से):</label>
+                        <input type="text" id="live_rounds" value="9,3,7,2,8,4,1,6,0,5" required>
                     </div>
                     <button type="submit" class="scan-btn">🔍 LIVE SCAN & PREDICT</button>
                 </form>
@@ -191,7 +180,7 @@ def home_page():
         </div>
 
         <script>
-            async function runLiveScan(event) {{
+            async function runLiveScan(event) {
                 event.preventDefault();
                 const period = document.getElementById('live_period').value;
                 const rounds = document.getElementById('live_rounds').value;
@@ -200,25 +189,26 @@ def home_page():
                 formData.append('period_number', period);
                 formData.append('past_10_rounds', rounds);
 
-                try {{
-                    const response = await fetch('/predict-wingo-1min', {{
+                try {
+                    const response = await fetch('/predict-wingo-1min', {
                         method: 'POST',
                         body: formData
-                    }});
+                    });
 
                     const data = await response.json();
-                    if(data.status === 'success') {{
+                    if(data.status === 'success') {
                         document.getElementById('resultBox').style.display = 'block';
                         document.getElementById('resContent').innerHTML = 
-                            '<b>🎯 सटीक नंबर:</b> <span class="highlight" style="font-size:16px;">' + data.prediction.exact_number + '</span><br>' +
+                            '<b>📌 टारगेट पीरियड:</b> <span class="highlight">' + data.target_period + '</span><br>' +
+                            '<b>🎯 सटीक नंबर:</b> <span class="highlight" style="font-size:14px;">' + data.prediction.exact_number + '</span><br>' +
                             '<b>📊 साइज:</b> <span class="highlight">' + data.prediction.size + '</span><br>' +
                             '<b>🎨 कलर:</b> <span class="highlight">' + data.prediction.color + '</span><br>' +
                             '<b>⚡ एक्यूरेसी:</b> ' + data.prediction.accuracy_confidence;
-                    }}
-                }} catch(err) {{
-                    alert('स्कैन करने में असफलता!');
-                }}
-            }}
+                    }
+                } catch(err) {
+                    alert('स्कैन करने में त्रुटि!');
+                }
+            }
         </script>
     </body>
     </html>
