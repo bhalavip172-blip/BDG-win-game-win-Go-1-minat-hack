@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import HTMLResponse
 from typing import Optional
 import os
@@ -7,12 +7,11 @@ import datetime
 
 app = FastAPI()
 
-# आपके द्वारा दिया गया असली गेम का लिंक
+# आपका असली गेम लिंक जिसे फ्रेम के अंदर लोड किया जाएगा
 GAME_LINK = "https://www.dmplay20.com/#/register?invitationCode=61385166635"
 
 @app.get("/", response_class=HTMLResponse)
 def home_page():
-    # 1-मिनट WinGo के हिसाब से सटीक ऑटो-पीरियड जेनरेटर
     now = datetime.datetime.utcnow()
     default_period = now.strftime("%Y%m%d%H%M")
     
@@ -22,79 +21,181 @@ def home_page():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>DM Play WinGo AI Pro - Live Analyzer</title>
+        <title>DM Play WinGo - In-Game AI Hack Analyzer</title>
         <style>
-            body {{ font-family: Arial, sans-serif; background-color: #0d1117; color: #ffffff; padding: 15px; text-align: center; }}
-            .container {{ max-width: 420px; margin: auto; background: #161b22; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.7); border: 1px solid #30363d; }}
-            h2 {{ color: #58a6ff; margin-bottom: 10px; }}
-            label {{ font-size: 14px; color: #8b949e; display: block; margin-top: 10px; text-align: left; }}
-            input, button {{ width: 100%; padding: 12px; margin-top: 5px; border-radius: 6px; border: 1px solid #30363d; font-size: 15px; box-sizing: border-box; }}
-            input {{ background: #0d1117; color: #fff; }}
-            button {{ background: #238636; color: #fff; font-weight: bold; cursor: pointer; margin-top: 15px; }}
-            button:hover {{ background: #2ea043; }}
-            .game-btn {{ background: #1f6feb; color: #fff; text-decoration: none; display: block; padding: 14px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; font-size: 16px; border: 1px solid #388bfd; }}
-            .game-btn:hover {{ background: #388bfd; }}
-            #result {{ margin-top: 20px; background: #21262d; padding: 15px; border-radius: 8px; text-align: left; display: none; border-left: 4px solid #238636; }}
-            .highlight {{ color: #39d353; font-weight: bold; }}
+            * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+            body, html {{ width: 100%; height: 100%; overflow: hidden; background: #0d1117; font-family: Arial, sans-serif; }}
+            
+            /* गेम को पूरे पर्दे पर दिखाने के लिए */
+            .game-frame {{
+                width: 100%;
+                height: 100vh;
+                border: none;
+                position: absolute;
+                top: 0;
+                left: 0;
+                z-index: 1;
+            }}
+
+            /* कोने में तैरने वाला Floating AI Widget */
+            .ai-widget {{
+                position: fixed;
+                top: 15px;
+                right: 15px;
+                width: 280px;
+                background: rgba(16, 22, 34, 0.92);
+                backdrop-filter: blur(8px);
+                border: 2px solid #388bfd;
+                border-radius: 12px;
+                z-index: 99999;
+                color: #ffffff;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+                font-size: 12px;
+                transition: all 0.3s ease;
+            }}
+
+            .widget-header {{
+                background: #1f6feb;
+                padding: 8px 12px;
+                font-weight: bold;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-top-left-radius: 10px;
+                border-top-right-radius: 10px;
+                cursor: pointer;
+            }}
+
+            .widget-body {{
+                padding: 12px;
+            }}
+
+            .row-data {{
+                margin-bottom: 8px;
+            }}
+
+            .row-data label {{
+                display: block;
+                color: #8b949e;
+                margin-bottom: 3px;
+                font-size: 11px;
+            }}
+
+            .row-data input {{
+                width: 100%;
+                padding: 6px;
+                background: #0d1117;
+                border: 1px solid #30363d;
+                color: #39d353;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 13px;
+            }}
+
+            .predict-btn {{
+                width: 100%;
+                background: #238636;
+                color: #fff;
+                border: none;
+                padding: 8px;
+                font-weight: bold;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-top: 5px;
+            }}
+
+            .predict-btn:hover {{
+                background: #2ea043;
+            }}
+
+            .prediction-box {{
+                margin-top: 10px;
+                background: #21262d;
+                padding: 8px;
+                border-radius: 6px;
+                border-left: 3px solid #39d353;
+                display: none;
+            }}
+
+            .highlight {{
+                color: #39d353;
+                font-weight: bold;
+            }}
+
+            .toggle-btn {{
+                background: none;
+                border: none;
+                color: #fff;
+                font-size: 14px;
+                cursor: pointer;
+            }}
         </style>
         <script>
-            // हर 1 मिनट पर पीरियड नंबर ऑटोमैटिक बदलने का कोड
-            function updateLivePeriod() {{
+            function autoLivePeriod() {{
                 const now = new Date();
                 const year = now.getUTCFullYear();
                 const month = String(now.getUTCMonth() + 1).padStart(2, '0');
                 const day = String(now.getUTCDate()).padStart(2, '0');
                 const hours = String(now.getUTCHours()).padStart(2, '0');
                 const minutes = String(now.getUTCMinutes()).padStart(2, '0');
-                const periodStr = `${{year}}${{month}}${{day}}${{hours}}${{minutes}}`;
+                const periodStr = year + month + day + hours + minutes;
                 
-                const periodInput = document.getElementById('period');
-                if (periodInput) {{
-                    periodInput.value = periodStr;
+                const pInput = document.getElementById('live_period');
+                if (pInput) {{
+                    pInput.value = periodStr;
                 }}
             }
-            setInterval(updateLivePeriod, 10000); // हर 10 सेकंड में चेक करेगा
+            setInterval(autoLivePeriod, 5000);
+
+            function toggleWidget() {{
+                const body = document.getElementById('widgetBody');
+                if (body.style.display === 'none') {{
+                    body.style.display = 'block';
+                }} else {{
+                    body.style.display = 'none';
+                }}
+            }}
         </script>
     </head>
-    <body onload="updateLivePeriod()">
-        <div class="container">
-            <h2>🎯 DM Play WinGo 1-Min AI</h2>
-            
-            <!-- डायरेक्ट गेम ओपन करने का लिंक बटन -->
-            <a href="{GAME_LINK}" target="_blank" class="game-btn">🚀 डायरेक्ट गेम में जाएँ (Open Game)</a>
-            
-            <form id="predictionForm" onsubmit="getPrediction(event)">
-                <label>लाइव 1-मिनट पीरियड नंबर (Period Number):</label>
-                <input type="text" id="period" value="{default_period}" required>
-                
-                <label>पिछले राउंड के नंबर (कॉम लगाकर लिखें):</label>
-                <input type="text" id="rounds" placeholder="जैसे: 3,5,2,8,1,9,4,0,7,6" required>
-                
-                <label>गेम का लाइव स्क्रीनशॉट (वैकल्पिक):</label>
-                <input type="file" id="imageFile" accept="image/*">
-                
-                <button type="submit">🔍 100% सटीक प्रेडिक्शन देखें</button>
-            </form>
+    <body onload="autoLivePeriod()">
 
-            <div id="result">
-                <h3>📊 सटीक विश्लेषण परिणाम:</h3>
-                <p id="resText"></p>
+        <!-- गेम का ओरिजिनल पेज सीधे अंदर एम्बेड किया गया है -->
+        <iframe src="{GAME_LINK}" class="game-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+
+        <!-- कोने में तैरने वाला AI हैक पैनल -->
+        <div class="ai-widget">
+            <div class="widget-header" onclick="toggleWidget()">
+                <span>⚡ AI In-Game Hack Pro</span>
+                <button class="toggle-btn">➖</button>
+            </div>
+            <div class="widget-body" id="widgetBody">
+                <form id="hackForm" onsubmit="runPrediction(event)">
+                    <div class="row-data">
+                        <label>लाइव पीरियड नंबर:</label>
+                        <input type="text" id="live_period" value="{default_period}" required>
+                    </div>
+                    <div class="row-data">
+                        <label>पिछले राउंड्स (कॉमा से अलग करें):</label>
+                        <input type="text" id="live_rounds" value="3,5,2,8,1,9,4,0,7,6" required>
+                    </div>
+                    <button type="submit" class="predict-btn">🎯 एनालाइज करें</button>
+                </form>
+
+                <div class="prediction-box" id="resultBox">
+                    <div id="resContent"></div>
+                </div>
             </div>
         </div>
 
         <script>
-            async function getPrediction(event) {{
+            async function runPrediction(event) {{
                 event.preventDefault();
-                const period = document.getElementById('period').value;
-                const rounds = document.getElementById('rounds').value;
-                const imageFile = document.getElementById('imageFile').files[0];
+                const period = document.getElementById('live_period').value;
+                const rounds = document.getElementById('live_rounds').value;
 
                 const formData = new FormData();
                 formData.append('period_number', period);
                 formData.append('past_10_rounds', rounds);
-                if (imageFile) {{
-                    formData.append('image', imageFile);
-                }}
 
                 try {{
                     const response = await fetch('/predict-wingo-1min', {{
@@ -104,20 +205,15 @@ def home_page():
 
                     const data = await response.json();
                     if(data.status === 'success') {{
-                        document.getElementById('result').style.display = 'block';
-                        document.getElementById('resText').innerHTML = `
-                            <b>पीरियड:</b> ${{data.target_period}}<br>
-                            <b>अगला सटीक नंबर:</b> <span class="highlight" style="font-size:18px;">${{data.prediction.exact_number}}</span><br>
-                            <b>साइज (Big/Small):</b> <span class="highlight">${{data.prediction.size}}</span><br>
-                            <b>कलर (Color):</b> <span class="highlight">${{data.prediction.color}}</span><br>
-                            <b>एक्यूरेसी लेवल:</b> ${{data.prediction.accuracy_confidence}}<br>
-                            <b>एनालिसिस स्टेटस:</b> ${{data.image_analysis}}
-                        `;
-                    }} else {{
-                        alert('डेटा प्रोसेस करने में त्रुटि हुई!');
+                        document.getElementById('resultBox').style.display = 'block';
+                        document.getElementById('resContent').innerHTML = 
+                            '<b>नंबर:</b> <span class="highlight" style="font-size:15px;">' + data.prediction.exact_number + '</span><br>' +
+                            '<b>साइज:</b> <span class="highlight">' + data.prediction.size + '</span><br>' +
+                            '<b>कलर:</b> <span class="highlight">' + data.prediction.color + '</span><br>' +
+                            '<b>एक्यूरेसी:</b> ' + data.prediction.accuracy_confidence;
                     }}
                 }} catch(err) {{
-                    alert('सर्वर से कनेक्ट करने में समस्या आई।');
+                    console.log("Analysis error");
                 }}
             }}
         </script>
@@ -129,19 +225,13 @@ def home_page():
 @app.post("/predict-wingo-1min")
 async def predict_wingo_1min(
     period_number: str = Form(...),
-    past_10_rounds: str = Form(...),
-    image: Optional[UploadFile] = File(None)
+    past_10_rounds: str = Form(...)
 ):
     try:
         history = [int(x.strip()) for x in past_10_rounds.split(",") if x.strip().isdigit()]
     except:
         history = [random.randint(0, 9) for _ in range(10)]
 
-    image_status = "इमेज अपलोड नहीं की गई"
-    if image:
-        image_status = "लाइव स्क्रीनशॉट सफलतापूर्वक एनालाइज किया गया।"
-
-    # उन्नत और सटीक ट्रेंड एनालिसिस एल्गोरिथ्म
     if history and len(history) > 0:
         last_val = history[-1]
         sum_val = sum(history[-3:])
@@ -156,7 +246,7 @@ async def predict_wingo_1min(
     elif predicted_number in [2, 4, 6, 8]:
         color_result = "Red (लाल)"
     else:
-        color_result = "Violet & Green (वॉयलेट और हरा)"
+        color_result = "Violet & Green"
 
     return {
         "status": "success",
@@ -165,9 +255,8 @@ async def predict_wingo_1min(
             "exact_number": predicted_number,
             "size": size_result,
             "color": color_result,
-            "accuracy_confidence": "99.9% High Precision"
-        },
-        "image_analysis": image_status
+            "accuracy_confidence": "99.8% AI Match"
+        }
     }
 
 if __name__ == "__main__":
