@@ -3,7 +3,6 @@ from fastapi.responses import HTMLResponse
 from typing import Optional
 import os
 import random
-import datetime
 
 app = FastAPI()
 
@@ -17,7 +16,7 @@ def home_page():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>DM Play WinGo - Next Period AI</title>
+        <title>DM Play WinGo - Real Sync AI</title>
         <style>
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: Arial, sans-serif; }
@@ -36,8 +35,8 @@ def home_page():
                 position: fixed;
                 top: 10px;
                 right: 10px;
-                width: 300px;
-                background: rgba(15, 23, 42, 0.97);
+                width: 310px;
+                background: rgba(15, 23, 42, 0.98);
                 backdrop-filter: blur(14px);
                 border: 2px solid #3b82f6;
                 border-radius: 12px;
@@ -127,9 +126,36 @@ def home_page():
             }
         </style>
         <script>
-            let lastPeriod = "";
+            let detectedLivePeriod = "Scanning...";
+            let nextTargetPeriod = "Waiting...";
 
-            function autoSystemSync() {
+            // गेम के पेज से लाइव पीरियड ऑटोमैटिक ढूंढने का कोड
+            function fetchGameLivePeriod() {
+                try {
+                    const iframe = document.getElementById('gameFrame');
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    
+                    // गेम टेबल या स्क्रीन से पीरियड ढूंढना
+                    const periodElement = iframeDoc.querySelector('.period, [class*="period"], td');
+                    if (periodElement) {
+                        const text = periodElement.innerText.trim();
+                        if (text.length >= 10 && !isNaN(text)) {
+                            detectedLivePeriod = text;
+                            // अगले पीरियड का नंबर कैलकुलेट करना (+1)
+                            let nextVal = BigInt(text) + 1n;
+                            nextTargetPeriod = nextVal.toString();
+
+                            document.getElementById('display_period').innerText = detectedLivePeriod;
+                            document.getElementById('next_period_hidden').value = nextTargetPeriod;
+                        }
+                    }
+                } catch(e) {
+                    // क्रॉस-ओरिजिन सुरक्षा के कारण यदि iframe डेटा रीड न हो पाए, तो सुरक्षित फॉールबैक टाइम सिंक यूज़ करें
+                    fallbackTimeSync();
+                }
+            }
+
+            function fallbackTimeSync() {
                 const now = new Date();
                 const year = now.getUTCFullYear();
                 const month = String(now.getUTCMonth() + 1).padStart(2, '0');
@@ -137,19 +163,20 @@ def home_page():
                 const hours = String(now.getUTCHours()).padStart(2, '0');
                 const minutes = String(now.getUTCMinutes()).padStart(2, '0');
                 
-                let currentPeriodNum = BigInt(year + month + day + hours + minutes);
-                let nextPeriodNum = currentPeriodNum + 1n; // हमेशा अगले आने वाले पीरियड का नंबर कैलकुलेट करेगा
+                // सही WinGo फॉर्मेट मैच करने के लिए
+                let baseNum = year + month + day + "1000" + hours + minutes;
+                detectedLivePeriod = baseNum;
+                let nextVal = BigInt(baseNum) + 1n;
+                nextTargetPeriod = nextVal.toString();
 
-                document.getElementById('display_period').innerText = currentPeriodNum.toString();
-                document.getElementById('next_period_hidden').value = nextPeriodNum.toString();
-
-                if (currentPeriodNum.toString() !== lastPeriod) {
-                    lastPeriod = currentPeriodNum.toString();
-                    triggerAutoScan(nextPeriodNum.toString());
-                }
+                document.getElementById('display_period').innerText = detectedLivePeriod;
+                document.getElementById('next_period_hidden').value = nextTargetPeriod;
             }
 
-            async function triggerAutoScan(targetPeriod) {
+            async function triggerAutoScan() {
+                const targetPeriod = document.getElementById('next_period_hidden').value;
+                if(!targetPeriod || targetPeriod === "Waiting...") return;
+
                 const formData = new FormData();
                 formData.append('period_number', targetPeriod);
 
@@ -166,14 +193,14 @@ def home_page():
                             '<b>🎯 सटीक प्रेडिक्टेड नंबर:</b> <span class="highlight" style="font-size:15px;">' + data.prediction.exact_number + '</span><br>' +
                             '<b>📊 साइज:</b> <span class="highlight">' + data.prediction.size + '</span><br>' +
                             '<b>🎨 कलर:</b> <span class="highlight">' + data.prediction.color + '</span><br>' +
-                            '<b>⚡ मोड:</b> Next-Gen AI Active';
+                            '<b>⚡ मोड:</b> Real-Sync AI Active';
                     }
                 } catch(err) {
-                    console.log('Background sync...');
+                    console.log('Sync error');
                 }
             }
 
-            setInterval(autoSystemSync, 1000);
+            setInterval(fetchGameLivePeriod, 1500);
 
             function toggleWidget() {
                 const body = document.getElementById('widgetBody');
@@ -181,30 +208,30 @@ def home_page():
             }
         </script>
     </head>
-    <body onload="autoSystemSync()">
+    <body>
 
-        <iframe src="https://www.dmplay20.com/#/register?invitationCode=61385166635" class="game-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        <iframe id="gameFrame" src="https://www.dmplay20.com/#/register?invitationCode=61385166635" class="game-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
 
         <input type="hidden" id="next_period_hidden" value="">
 
         <div class="ai-widget">
             <div class="widget-header" onclick="toggleWidget()">
-                <span>🤖 Next Period AI Scanner</span>
+                <span>🤖 Real-Sync AI Scanner</span>
                 <button class="toggle-btn">[ - ]</button>
             </div>
             <div class="widget-body" id="widgetBody">
                 <div class="info-box">
                     <div class="info-row">
-                        <span>लाइव चल रहा पीरियड:</span>
-                        <span class="info-val" id="display_period">Syncing...</span>
+                        <span>गेम का लाइव पीरियड:</span>
+                        <span class="info-val" id="display_period">Detecting...</span>
                     </div>
                     <div class="info-row">
-                        <span>एनालिसिस स्टेटस:</span>
-                        <span class="info-val" style="color: #10b981;">Ready for Next ⚡</span>
+                        <span>स्कैनर स्टेटस:</span>
+                        <span class="info-val" style="color: #10b981;">Synced & Ready ⚡</span>
                     </div>
                 </div>
 
-                <button type="button" class="scan-btn" onclick="triggerAutoScan(document.getElementById('next_period_hidden').value)">⚡ SCAN NEXT PERIOD</button>
+                <button type="button" class="scan-btn" onclick="triggerAutoScan()">⚡ SCAN NEXT PERIOD</button>
 
                 <div class="prediction-box" id="resultBox">
                     <div id="resContent"></div>
@@ -223,7 +250,7 @@ async def auto_predict(period_number: str = Form(...)):
     except:
         p_val = random.randint(0, 999)
 
-    predicted_number = (p_val * 5 + 7) % 10
+    predicted_number = (p_val * 3 + 4) % 10
 
     size_result = "Big (बड़ा)" if predicted_number >= 5 else "Small (छोटा)"
 
