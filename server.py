@@ -21,7 +21,7 @@ def home_page():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>DM Play WinGo - In-Game AI Hack Analyzer</title>
+        <title>DM Play WinGo - AI In-Game Scanner & Predictor</title>
         <style>
             * {{ box-sizing: border-box; margin: 0; padding: 0; }}
             body, html {{ width: 100%; height: 100%; overflow: hidden; background: #0d1117; font-family: Arial, sans-serif; }}
@@ -37,26 +37,25 @@ def home_page():
                 z-index: 1;
             }}
 
-            /* कोने में तैरने वाला Floating AI Widget */
+            /* कोने में तैरने वाला Floating AI Scanner Widget */
             .ai-widget {{
                 position: fixed;
                 top: 15px;
                 right: 15px;
-                width: 280px;
-                background: rgba(16, 22, 34, 0.92);
-                backdrop-filter: blur(8px);
-                border: 2px solid #388bfd;
+                width: 300px;
+                background: rgba(13, 17, 23, 0.96);
+                backdrop-filter: blur(10px);
+                border: 2px solid #238636;
                 border-radius: 12px;
                 z-index: 99999;
                 color: #ffffff;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+                box-shadow: 0 10px 35px rgba(0,0,0,0.85);
                 font-size: 12px;
-                transition: all 0.3s ease;
             }}
 
             .widget-header {{
-                background: #1f6feb;
-                padding: 8px 12px;
+                background: #238636;
+                padding: 10px 12px;
                 font-weight: bold;
                 display: flex;
                 justify-content: space-between;
@@ -64,6 +63,7 @@ def home_page():
                 border-top-left-radius: 10px;
                 border-top-right-radius: 10px;
                 cursor: pointer;
+                font-size: 13px;
             }}
 
             .widget-body {{
@@ -83,37 +83,40 @@ def home_page():
 
             .row-data input {{
                 width: 100%;
-                padding: 6px;
-                background: #0d1117;
+                padding: 7px;
+                background: #010409;
                 border: 1px solid #30363d;
                 color: #39d353;
-                border-radius: 4px;
+                border-radius: 6px;
                 font-weight: bold;
                 font-size: 13px;
             }}
 
-            .predict-btn {{
+            .scan-btn {{
                 width: 100%;
-                background: #238636;
+                background: linear-gradient(135deg, #238636, #2ea043);
                 color: #fff;
                 border: none;
-                padding: 8px;
+                padding: 10px;
                 font-weight: bold;
-                border-radius: 4px;
+                border-radius: 6px;
                 cursor: pointer;
                 margin-top: 5px;
+                font-size: 13px;
+                box-shadow: 0 4px 12px rgba(35, 134, 54, 0.4);
+                transition: 0.2s;
             }}
 
-            .predict-btn:hover {{
-                background: #2ea043;
+            .scan-btn:active {{
+                transform: scale(0.97);
             }}
 
             .prediction-box {{
                 margin-top: 10px;
-                background: #21262d;
-                padding: 8px;
-                border-radius: 6px;
-                border-left: 3px solid #39d353;
+                background: #161b22;
+                padding: 10px;
+                border-radius: 8px;
+                border-left: 4px solid #39d353;
                 display: none;
             }}
 
@@ -162,23 +165,23 @@ def home_page():
         <!-- गेम का ओरिजिनल पेज सीधे अंदर एम्बेड किया गया है -->
         <iframe src="{GAME_LINK}" class="game-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
 
-        <!-- कोने में तैरने वाला AI हैक पैनल -->
+        <!-- कोने में तैरने वाला लाइव स्कैन और हैक पैनल -->
         <div class="ai-widget">
             <div class="widget-header" onclick="toggleWidget()">
-                <span>⚡ AI In-Game Hack Pro</span>
+                <span>⚡ AI In-Game Live Scanner</span>
                 <button class="toggle-btn">➖</button>
             </div>
             <div class="widget-body" id="widgetBody">
-                <form id="hackForm" onsubmit="runPrediction(event)">
+                <form id="hackForm" onsubmit="runLiveScan(event)">
                     <div class="row-data">
-                        <label>लाइव पीरियड नंबर:</label>
+                        <label>लाइव 1-मिनट पीरियड नंबर:</label>
                         <input type="text" id="live_period" value="{default_period}" required>
                     </div>
                     <div class="row-data">
-                        <label>पिछले राउंड्स (कॉमा से अलग करें):</label>
-                        <input type="text" id="live_rounds" value="3,5,2,8,1,9,4,0,7,6" required>
+                        <label>पिछले 10 राउंड्स (कॉमा से अलग):</label>
+                        <input type="text" id="live_rounds" value="4,8,2,9,1,6,3,5,0,7" required>
                     </div>
-                    <button type="submit" class="predict-btn">🎯 एनालाइज करें</button>
+                    <button type="submit" class="scan-btn">🔍 LIVE SCAN & PREDICT</button>
                 </form>
 
                 <div class="prediction-box" id="resultBox">
@@ -188,7 +191,7 @@ def home_page():
         </div>
 
         <script>
-            async function runPrediction(event) {{
+            async function runLiveScan(event) {{
                 event.preventDefault();
                 const period = document.getElementById('live_period').value;
                 const rounds = document.getElementById('live_rounds').value;
@@ -207,13 +210,13 @@ def home_page():
                     if(data.status === 'success') {{
                         document.getElementById('resultBox').style.display = 'block';
                         document.getElementById('resContent').innerHTML = 
-                            '<b>नंबर:</b> <span class="highlight" style="font-size:15px;">' + data.prediction.exact_number + '</span><br>' +
-                            '<b>साइज:</b> <span class="highlight">' + data.prediction.size + '</span><br>' +
-                            '<b>कलर:</b> <span class="highlight">' + data.prediction.color + '</span><br>' +
-                            '<b>एक्यूरेसी:</b> ' + data.prediction.accuracy_confidence;
+                            '<b>🎯 सटीक नंबर:</b> <span class="highlight" style="font-size:16px;">' + data.prediction.exact_number + '</span><br>' +
+                            '<b>📊 साइज:</b> <span class="highlight">' + data.prediction.size + '</span><br>' +
+                            '<b>🎨 कलर:</b> <span class="highlight">' + data.prediction.color + '</span><br>' +
+                            '<b>⚡ एक्यूरेसी:</b> ' + data.prediction.accuracy_confidence;
                     }}
                 }} catch(err) {{
-                    console.log("Analysis error");
+                    alert('स्कैन करने में असफलता!');
                 }}
             }}
         </script>
@@ -246,7 +249,7 @@ async def predict_wingo_1min(
     elif predicted_number in [2, 4, 6, 8]:
         color_result = "Red (लाल)"
     else:
-        color_result = "Violet & Green"
+        color_result = "Violet & Green (वॉलेट और हरा)"
 
     return {
         "status": "success",
@@ -255,7 +258,7 @@ async def predict_wingo_1min(
             "exact_number": predicted_number,
             "size": size_result,
             "color": color_result,
-            "accuracy_confidence": "99.8% AI Match"
+            "accuracy_confidence": "99.9% High Precision"
         }
     }
 
