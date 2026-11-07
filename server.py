@@ -1,143 +1,133 @@
+Act as a senior Python Flask developer and software debugging engineer.
 
-Act as a Senior Python Flask Developer, Historical Data Analyst, and Software Engineer.
+I have an existing BDG Win Go 1-Minute Smart AI Analyzer project deployed on Render.
 
-I have an existing BDG Win Go 1-Minute Smart AI Analyzer project. Your task is to modify ONLY its existing analysis engine.
+IMPORTANT: First inspect the complete existing server.py file before modifying anything.
 
-1. STRICT PRESERVATION RULE
+TASK: Fix the deployment error and replace the incorrect Period-ID-based mathematical analysis with genuine historical result data analysis.
 
-Keep the complete existing project exactly as it is.
+SECTION 1 - FIX THE RENDER ERROR
 
-DO NOT change:
+The current Render log shows:
 
-- Existing BDG Win game URL.
-- Existing game iframe.
-- HTML page layout.
-- CSS styling, colors, gradients, and animations.
-- Floating scanner panel.
-- Panel position, size, and draggable behavior.
-- Minimize and toggle buttons.
-- Existing Flask server configuration.
-- Render deployment configuration.
-- Existing Auto Period ID system.
-- Existing 1-minute countdown timer.
-- Existing responsive mobile design.
+SyntaxError: invalid character '–' (U+2013)
 
-Do not rebuild the project from scratch.
+Find and fix the exact syntax error.
 
-Do not remove existing working features.
+Rules:
 
-2. REPLACE THE INCORRECT ANALYSIS LOGIC
+- Never insert plain English instructions into executable Python code.
+- Every Python comment must start with #.
+- Every text value must be inside valid quotation marks.
+- Replace accidental Unicode dash characters with standard ASCII hyphens where appropriate.
+- Check indentation and Python syntax.
+- Do not leave Markdown headings or prompt instructions inside server.py.
+- Run a Python syntax validation before deployment.
+- Ensure the application starts successfully using the existing Flask configuration.
 
-Inspect the existing function named:
+SECTION 2 - PRESERVE THE EXISTING PROJECT
 
-runSmartPredictionEngine(targetPeriod)
+Do not redesign or rebuild the project.
 
-The current implementation calculates a number using the Period ID digits and a mathematical formula.
+Keep all existing working components unchanged:
 
-Replace this Period-ID-based result calculation with a genuine historical-data analysis module.
+- Existing HTML layout.
+- Existing CSS and visual design.
+- Existing floating scanner panel.
+- Existing game iframe configuration.
+- Existing panel controls.
+- Existing Period ID display.
+- Existing one-minute countdown timer.
+- Existing Flask routes.
+- Existing Render deployment configuration.
 
-IMPORTANT:
-Period ID must ONLY identify and synchronize records. It must NEVER be used as a mathematical source for calculating a game result.
+Modify only the analysis logic and the minimum supporting functions required.
 
-3. HISTORICAL DATA ANALYSIS
+SECTION 3 - REMOVE PERIOD-BASED NUMBER CALCULATION
 
-Analyze all genuinely available historical game records.
+Inspect the existing runSmartPredictionEngine(targetPeriod) logic.
 
-Support retrieving and processing 20–50 pages of historical records when the source makes them accessible.
+Remove any mathematical formula that calculates a result number from Period ID digits.
 
-For every record, maintain:
+Period ID must only be used for:
 
-- Period ID
-- Actual result number
-- Actual color
-- Actual Big/Small category
-- Timestamp
+- Identifying a record.
+- Matching a result to its correct period.
+- Detecting missing or duplicate records.
+- Synchronizing the timer.
+
+Never use Period ID digits as historical result data.
+
+SECTION 4 - HISTORICAL DATA ANALYSIS ENGINE
+
+Build a separate historical statistics module.
+
+Read actual historical game results whenever a legitimate data source makes them available.
+
+Support processing 20 to 50 pages of historical records when accessible.
+
+Store and validate:
+
+- Period ID.
+- Actual result number.
+- Actual result color.
+- Actual Big or Small category.
+- Timestamp.
 
 Analyze:
 
-- Number frequency from 0 to 9.
+- Frequency of each result number from 0 to 9.
 - Historical number distribution.
-- Repetition patterns.
-- Consecutive result sequences.
-- Color distribution.
-- Big/Small distribution.
-- Short-term and long-term statistical differences.
+- Repeated number sequences.
+- Consecutive result patterns.
+- Color frequency.
+- Big and Small frequency.
+- Short-term and long-term distributions.
 - Missing records.
 - Duplicate records.
-- Incorrect period-result matching.
+- Incorrect period matching.
 
-Never invent missing historical results.
+Do not invent records or fabricate results.
 
-4. AUTOMATIC DATA SYNCHRONIZATION
+SECTION 5 - AUTOMATIC SYNCHRONIZATION
 
-Keep the existing one-minute period synchronization.
+Keep the existing one-minute automatic Period ID and countdown timer.
 
-The system must:
+Automatically:
 
-- Detect the current Period ID.
-- Match each historical result with its correct Period ID.
-- Detect when a new period begins.
-- Update historical records automatically when genuine data is available.
-- Keep the countdown timer synchronized.
+- Detect the current period.
+- Match incoming historical results with their correct Period ID.
+- Update the historical record collection when new actual results become available.
 - Prevent duplicate records.
-- Display synchronization errors clearly.
+- Report synchronization errors.
+- Maintain correct timestamps.
 
-5. STATISTICAL VALIDATION
+SECTION 6 - STATISTICAL VALIDATION
 
-Implement genuine walk-forward backtesting.
+Use chronological walk-forward backtesting.
 
-Evaluate the analysis using only historical records that would have been available at each test point.
+At each test point, use only historical records available before that point.
 
-Display:
+Display actual historical statistics and measured backtesting performance.
 
-- Number of records analyzed.
-- Historical frequency.
-- Actual distribution.
-- Backtesting results.
-- Data quality.
-- Model limitations.
+Never fabricate accuracy percentages or claim guaranteed outcomes.
 
-Never display fabricated accuracy percentages.
+SECTION 7 - FINAL TESTING
 
-6. FLOATING PANEL
+Before returning the updated project:
 
-Keep the existing floating panel design unchanged.
+1. Validate server.py syntax.
+2. Check every Python function.
+3. Check Flask route configuration.
+4. Check HTML and JavaScript syntax.
+5. Verify existing element IDs are preserved.
+6. Verify the timer and Period ID display still work.
+7. Verify the floating panel still works.
+8. Verify the application starts without SyntaxError.
+9. Return the complete corrected server.py and any required supporting files.
 
-Update only its data values using the historical analysis module.
+Do not return partial code.
 
-Display:
+Do not replace working components unnecessarily.
 
-- Current Period ID.
-- Countdown Timer.
-- Historical Record Count.
-- Last Actual Result.
-- Number Frequency.
-- Color Statistics.
-- Big/Small Statistics.
-- Historical Pattern Summary.
-- Data Synchronization Status.
-- Backtesting Performance.
-
-7. CODE QUALITY
-
-Preserve existing working code wherever possible.
-
-Use the existing Flask architecture.
-
-Avoid unnecessary dependencies.
-
-Handle missing data and network errors safely.
-
-Do not use random numbers or fabricated formulas.
-
-8. FINAL REQUIREMENT
-
-Before making changes, inspect the complete existing source code.
-
-Modify ONLY the analysis engine and the minimum supporting data functions required.
-
-Keep the existing game URL, iframe, floating panel, HTML design, timer, Period ID synchronization, and Render deployment unchanged.
-
-Return the complete updated source code, not partial snippets.
-
-Test the updated code for syntax errors and verify that existing features remain functional.
+MOST IMPORTANT: Historical result data must be the source of statistical analysis. Period ID must never be used to calculate a result number.
