@@ -1,95 +1,67 @@
-You are an expert Python Flask developer and code maintenance engineer.
+You are editing an existing Python Flask project.
 
-I have an EXISTING working BDG Win Go 1-Minute Smart AI Analyzer project.
+PROJECT: BDG Win Go 1-Minute Smart AI Analyzer.
 
-YOUR TASK IS TO MAKE A SMALL, TARGETED CODE MODIFICATION.
+IMPORTANT: Make a minimal patch to the existing source code. Do not rebuild the project.
 
-CRITICAL: DO NOT REBUILD THE PROJECT. DO NOT REWRITE THE ENTIRE FILE.
+MY ONLY REQUEST:
+Replace the existing Period-ID-based mathematical analysis with genuine historical result statistics.
 
-1. PRESERVE THE ORIGINAL PROJECT
+STEP 1: INSPECT
 
-Keep the existing code and functionality unchanged wherever possible.
+- Read the complete existing server.py.
+- Find the current analysis function.
+- Identify exactly where Period ID digits are being used to calculate a result.
+- Inspect how historical results are currently stored or retrieved.
 
+STEP 2: PRESERVE EVERYTHING
 Do not modify:
 
-- Existing HTML design.
-- Existing CSS.
-- Existing game URL.
-- Existing iframe.
-- Existing floating scanner panel.
-- Existing panel controls.
-- Existing Flask routes.
-- Existing Render configuration.
-- Existing one-minute timer.
-- Existing automatic Period ID synchronization.
+- Existing game URL or iframe.
+- Existing HTML and CSS design.
+- Floating scanner panel.
+- Panel position, buttons, and controls.
+- Flask routes.
+- One-minute timer.
+- Automatic Period ID synchronization.
+- Render configuration.
+- Existing working functions.
 
-2. FIX THE ANALYSIS SOURCE
+STEP 3: CHANGE ONLY THE ANALYSIS MODULE
 
-Inspect the existing analysis function.
+- Stop using Period ID digits as a source for result calculations.
+- Keep Period ID only for matching and identifying historical records.
+- Use genuine historical result records as the source of statistical analysis.
+- Analyze all genuinely available historical records, including up to 20-50 pages if the existing source supports them.
+- Calculate historical number frequencies from 0 to 9.
+- Analyze historical number distributions, repetitions, sequences, color frequencies, and Big/Small frequencies.
+- Detect missing records and duplicate records.
+- Keep historical statistics separate from Period ID synchronization.
+- Do not invent or fabricate historical data.
 
-The current code uses Period ID digits and a mathematical formula to calculate a number.
+STEP 4: SAFE CODE MODIFICATION
 
-Do not use Period ID digits as result data.
+- Modify only the required existing function and its minimum supporting functions.
+- Do not paste this instruction text into server.py.
+- Do not insert Markdown headings into Python code.
+- Do not replace the complete source file.
+- Do not introduce unnecessary libraries.
+- Keep the original code as a backup.
+- Show the exact code diff before applying changes.
 
-Period ID must only identify and match the correct historical record.
-
-3. HISTORICAL DATA MODULE
-
-Make a separate module that analyzes actual historical result records already available to the application.
-
-Use the available historical records to calculate:
-
-- Frequency of each result number.
-- Number distribution.
-- Historical repetitions.
-- Consecutive result sequences.
-- Color frequency.
-- Big and Small frequency.
-- Short-term and long-term statistics.
-
-Use up to 20-50 historical pages only when they are genuinely accessible from the existing data source.
-
-Do not fabricate historical results.
-
-Do not assume that a Period ID is a result number.
-
-4. SAFE INTEGRATION
-
-Do not delete existing working functions unnecessarily.
-
-Keep the existing timer and automatic Period ID system.
-
-Connect the historical statistics module to the existing panel using the existing HTML element IDs wherever possible.
-
-Do not change the visual layout.
-
-5. TEST BEFORE SAVING
-
-Before modifying the file:
-
-- Create a backup of the original server.py.
-- Inspect the complete source code.
-- Identify the exact function that needs modification.
-
-After modifying:
+STEP 5: VALIDATION
+Before saving:
 
 - Run Python syntax validation.
+- Check imports and indentation.
 - Check Flask startup.
-- Check HTML and JavaScript syntax.
-- Verify that existing functions still work.
+- Check existing HTML element IDs.
+- Check JavaScript syntax.
+- Verify that the original timer, panel, game iframe, and routes remain unchanged.
 
-6. STRICT OUTPUT RULE
+If the historical data source cannot be accessed, stop and report the exact missing dependency. Do not create fake data or pretend the analysis works.
 
-IMPORTANT:
-Do not paste this prompt into server.py.
+FINAL OUTPUT:
+Return only the minimal source-code patch, explain the changed lines, and report the validation results.
 
-This is an instruction for editing the existing source code, NOT executable Python code.
-
-Return:
-
-1. A short explanation of the exact lines changed.
-2. A minimal code patch or diff.
-3. The complete corrected file only if necessary.
-4. Confirmation that syntax validation passed.
-
-Never replace the complete working project with a new demo or unrelated implementation.
+Do not commit or deploy code that fails syntax validation.
