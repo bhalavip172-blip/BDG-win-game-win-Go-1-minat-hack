@@ -1,133 +1,95 @@
-Act as a senior Python Flask developer and software debugging engineer.
+You are an expert Python Flask developer and code maintenance engineer.
 
-I have an existing BDG Win Go 1-Minute Smart AI Analyzer project deployed on Render.
+I have an EXISTING working BDG Win Go 1-Minute Smart AI Analyzer project.
 
-IMPORTANT: First inspect the complete existing server.py file before modifying anything.
+YOUR TASK IS TO MAKE A SMALL, TARGETED CODE MODIFICATION.
 
-TASK: Fix the deployment error and replace the incorrect Period-ID-based mathematical analysis with genuine historical result data analysis.
+CRITICAL: DO NOT REBUILD THE PROJECT. DO NOT REWRITE THE ENTIRE FILE.
 
-SECTION 1 - FIX THE RENDER ERROR
+1. PRESERVE THE ORIGINAL PROJECT
 
-The current Render log shows:
+Keep the existing code and functionality unchanged wherever possible.
 
-SyntaxError: invalid character '–' (U+2013)
+Do not modify:
 
-Find and fix the exact syntax error.
-
-Rules:
-
-- Never insert plain English instructions into executable Python code.
-- Every Python comment must start with #.
-- Every text value must be inside valid quotation marks.
-- Replace accidental Unicode dash characters with standard ASCII hyphens where appropriate.
-- Check indentation and Python syntax.
-- Do not leave Markdown headings or prompt instructions inside server.py.
-- Run a Python syntax validation before deployment.
-- Ensure the application starts successfully using the existing Flask configuration.
-
-SECTION 2 - PRESERVE THE EXISTING PROJECT
-
-Do not redesign or rebuild the project.
-
-Keep all existing working components unchanged:
-
-- Existing HTML layout.
-- Existing CSS and visual design.
+- Existing HTML design.
+- Existing CSS.
+- Existing game URL.
+- Existing iframe.
 - Existing floating scanner panel.
-- Existing game iframe configuration.
 - Existing panel controls.
-- Existing Period ID display.
-- Existing one-minute countdown timer.
 - Existing Flask routes.
-- Existing Render deployment configuration.
+- Existing Render configuration.
+- Existing one-minute timer.
+- Existing automatic Period ID synchronization.
 
-Modify only the analysis logic and the minimum supporting functions required.
+2. FIX THE ANALYSIS SOURCE
 
-SECTION 3 - REMOVE PERIOD-BASED NUMBER CALCULATION
+Inspect the existing analysis function.
 
-Inspect the existing runSmartPredictionEngine(targetPeriod) logic.
+The current code uses Period ID digits and a mathematical formula to calculate a number.
 
-Remove any mathematical formula that calculates a result number from Period ID digits.
+Do not use Period ID digits as result data.
 
-Period ID must only be used for:
+Period ID must only identify and match the correct historical record.
 
-- Identifying a record.
-- Matching a result to its correct period.
-- Detecting missing or duplicate records.
-- Synchronizing the timer.
+3. HISTORICAL DATA MODULE
 
-Never use Period ID digits as historical result data.
+Make a separate module that analyzes actual historical result records already available to the application.
 
-SECTION 4 - HISTORICAL DATA ANALYSIS ENGINE
+Use the available historical records to calculate:
 
-Build a separate historical statistics module.
-
-Read actual historical game results whenever a legitimate data source makes them available.
-
-Support processing 20 to 50 pages of historical records when accessible.
-
-Store and validate:
-
-- Period ID.
-- Actual result number.
-- Actual result color.
-- Actual Big or Small category.
-- Timestamp.
-
-Analyze:
-
-- Frequency of each result number from 0 to 9.
-- Historical number distribution.
-- Repeated number sequences.
-- Consecutive result patterns.
+- Frequency of each result number.
+- Number distribution.
+- Historical repetitions.
+- Consecutive result sequences.
 - Color frequency.
 - Big and Small frequency.
-- Short-term and long-term distributions.
-- Missing records.
-- Duplicate records.
-- Incorrect period matching.
+- Short-term and long-term statistics.
 
-Do not invent records or fabricate results.
+Use up to 20-50 historical pages only when they are genuinely accessible from the existing data source.
 
-SECTION 5 - AUTOMATIC SYNCHRONIZATION
+Do not fabricate historical results.
 
-Keep the existing one-minute automatic Period ID and countdown timer.
+Do not assume that a Period ID is a result number.
 
-Automatically:
+4. SAFE INTEGRATION
 
-- Detect the current period.
-- Match incoming historical results with their correct Period ID.
-- Update the historical record collection when new actual results become available.
-- Prevent duplicate records.
-- Report synchronization errors.
-- Maintain correct timestamps.
+Do not delete existing working functions unnecessarily.
 
-SECTION 6 - STATISTICAL VALIDATION
+Keep the existing timer and automatic Period ID system.
 
-Use chronological walk-forward backtesting.
+Connect the historical statistics module to the existing panel using the existing HTML element IDs wherever possible.
 
-At each test point, use only historical records available before that point.
+Do not change the visual layout.
 
-Display actual historical statistics and measured backtesting performance.
+5. TEST BEFORE SAVING
 
-Never fabricate accuracy percentages or claim guaranteed outcomes.
+Before modifying the file:
 
-SECTION 7 - FINAL TESTING
+- Create a backup of the original server.py.
+- Inspect the complete source code.
+- Identify the exact function that needs modification.
 
-Before returning the updated project:
+After modifying:
 
-1. Validate server.py syntax.
-2. Check every Python function.
-3. Check Flask route configuration.
-4. Check HTML and JavaScript syntax.
-5. Verify existing element IDs are preserved.
-6. Verify the timer and Period ID display still work.
-7. Verify the floating panel still works.
-8. Verify the application starts without SyntaxError.
-9. Return the complete corrected server.py and any required supporting files.
+- Run Python syntax validation.
+- Check Flask startup.
+- Check HTML and JavaScript syntax.
+- Verify that existing functions still work.
 
-Do not return partial code.
+6. STRICT OUTPUT RULE
 
-Do not replace working components unnecessarily.
+IMPORTANT:
+Do not paste this prompt into server.py.
 
-MOST IMPORTANT: Historical result data must be the source of statistical analysis. Period ID must never be used to calculate a result number.
+This is an instruction for editing the existing source code, NOT executable Python code.
+
+Return:
+
+1. A short explanation of the exact lines changed.
+2. A minimal code patch or diff.
+3. The complete corrected file only if necessary.
+4. Confirmation that syntax validation passed.
+
+Never replace the complete working project with a new demo or unrelated implementation.
