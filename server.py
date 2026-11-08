@@ -5,14 +5,7 @@ import random
 app = Flask(__name__)
 
 # पिछले ऐतिहासिक परिणामों (Historical Data Records) को स्टोर करने की लिस्ट
-# सर्वर जैसे-जैसे आगे बढ़ेगा, यह ऑटोमैटिक पिछले डेटा को स्टोर और एनालाइज करेगा
-history_records = [
-    {'period': '2026110800010656', 'number': 3, 'size': 'Small', 'color': 'Green'},
-    {'period': '2026110800010655', 'number': 8, 'size': 'Big', 'color': 'Red'},
-    {'period': '2026110800010654', 'number': 1, 'size': 'Small', 'color': 'Green'},
-    {'period': '2026110800010653', 'number': 7, 'size': 'Big', 'color': 'Green'},
-    {'period': '2026110800010652', 'number': 4, 'size': 'Small', 'color': 'Red'}
-]
+history_records = []
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -25,7 +18,7 @@ HTML_TEMPLATE = """
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body, html { width: 100%; height: 100%; overflow: hidden; background: #111; }
         
-        /* बैकग्राउंड में गेम का आधिकारिक लिंक (iframe) */
+        /* बैकग्राउंड में बीडीजी विन गेम का आधिकारिक लिंक */
         .game-container {
             width: 100%;
             height: 100%;
@@ -36,7 +29,34 @@ HTML_TEMPLATE = """
             z-index: 1;
         }
 
-        /* कोने में तैरता हुआ पैनल (Floating Panel) */
+        .fallback-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            color: #888;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .fallback-bg a {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #d4af37;
+            color: #000;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        /* कोने में तैरता हुआ पैनल जिसमें + और - रीसाइज़ बटन हैं */
         .floating-panel {
             position: absolute;
             top: 40px;
@@ -51,6 +71,8 @@ HTML_TEMPLATE = """
             color: #fff;
             user-select: none;
             cursor: move;
+            transition: transform 0.2s ease;
+            transform-origin: top left;
         }
 
         .panel-header {
@@ -67,6 +89,26 @@ HTML_TEMPLATE = """
             font-weight: bold;
             color: #d4af37;
             letter-spacing: 1px;
+        }
+
+        .resize-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .btn-resize {
+            background: #d4af37;
+            color: #000;
+            border: none;
+            width: 20px;
+            height: 20px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .badge-active {
@@ -165,13 +207,13 @@ HTML_TEMPLATE = """
             transition: 0.2s;
         }
 
-        .btn-next {
+        .btn-scan {
             background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
             color: white;
             box-shadow: 0 2px 6px rgba(255,152,0,0.4);
         }
 
-        .btn-next:active { transform: scale(0.95); }
+        .btn-scan:active { transform: scale(0.95); }
 
         .btn-hide {
             background: rgba(255, 255, 255, 0.1);
@@ -184,20 +226,30 @@ HTML_TEMPLATE = """
 </head>
 <body>
 
-    <!-- BDG Game Official Link -->
-    <iframe class="game-container" src="https://bdgwin.com" id="gameIframe"></iframe>
+    <!-- फॉलबैक लिंक यदि iframe ब्लॉक हो -->
+    <div class="fallback-bg">
+        <p>यदि गेम लोड न हो तो डायरेक्ट खोलें:</p>
+        <a href="https://bdgwin56.com/#/register?invitationCode=8528414760979" target="_blank">OPEN BDG WIN GAME 🚀</a>
+    </div>
 
-    <!-- Floating Number Tool Panel -->
+    <!-- बीडीजी विन गेम का आधिकारिक लिंक (iframe) -->
+    <iframe class="game-container" src="https://bdgwin56.com/#/register?invitationCode=8528414760979" id="gameIframe"></iframe>
+
+    <!-- तैरता हुआ पैनल -->
     <div class="floating-panel" id="floatingPanel">
         <div class="panel-header">
             <span class="panel-title">NUMBER TOOL</span>
+            <div class="resize-controls">
+                <button class="btn-resize" onclick="changeSize(0.1)" title="Zoom In">+</button>
+                <button class="btn-resize" onclick="changeSize(-0.1)" title="Zoom Out">-</button>
+            </div>
             <span class="badge-active">ACTIVE</span>
         </div>
         <div class="game-brand">BDG WIN</div>
         
         <div class="status-row">
             <span>⚡ LIVE: <b>ACTIVE</b></span>
-            <span>📡 PING: <b id="pingVal">24MS</b></span>
+            <span>⏱️ SEC: <b id="secTimer">60s</b></span>
             <span>🛡️ BAL: <b>₹0.00</b></span>
         </div>
 
@@ -206,16 +258,16 @@ HTML_TEMPLATE = """
             <div class="pred-ball" id="predNumber">6</div>
         </div>
 
-        <div class="period-display" id="prdDisplay">#PRD: Loading...</div>
+        <div class="period-display" id="prdDisplay">#PRD: Syncing...</div>
 
         <div class="button-group">
-            <button class="btn btn-next" onclick="fetchPrediction()">SCAN ➔</button>
+            <button class="btn btn-scan" onclick="triggerScan()">SCAN ➔</button>
             <button class="btn btn-hide" onclick="toggleHide()">👁 HIDE</button>
         </div>
     </div>
 
     <script>
-        // पैनल को स्क्रीन पर कहीं भी खींचने (Drag) के लिए
+        // पैनल को ड्रैग (खिसकाने) के लिए
         const panel = document.getElementById('floatingPanel');
         let isDragging = false, startX, startY;
 
@@ -228,6 +280,7 @@ HTML_TEMPLATE = """
         document.addEventListener('mouseup', dragEnd);
 
         function dragStart(e) {
+            if(e.target.tagName === 'BUTTON') return;
             isDragging = true;
             const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
             const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
@@ -251,23 +304,71 @@ HTML_TEMPLATE = """
             panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
         }
 
-        // सर्वर से पिछला डेटा एनालाइज करा के नया प्रेडिक्शन मंगवाना
-        function fetchPrediction() {
-            fetch('/get_prediction')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('predSize').innerText = data.size;
-                    document.getElementById('predNumber').innerText = data.number;
-                    document.getElementById('prdDisplay').innerText = '#PRD: ' + data.period;
-                })
-                .catch(err => console.error('Error:', err));
+        // पैनल को छोटा या बड़ा करने के लिए (+ / - बटन)
+        let currentScale = 1.0;
+        function changeSize(amount) {
+            currentScale += amount;
+            if (currentScale < 0.7) currentScale = 0.7;
+            if (currentScale > 1.4) currentScale = 1.4;
+            panel.style.transform = `scale(${currentScale})`;
         }
 
-        // पेज लोड होते ही प्रेडिक्शन फेच करें
-        window.onload = fetchPrediction;
+        // वास्तविक लाइव गेम टाइम और राउंड के आधार पर ऑटोमैटिक पीरियड नंबर कैलकुलेट करना
+        function getAutoLivePeriod() {
+            const now = new Date();
+            const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const istTime = new Date(utcTime + (3600000 * 5.5)); // IST Timezone
+            
+            const year = istTime.getFullYear();
+            const month = String(istTime.getMonth() + 1).padStart(2, '0');
+            const day = String(istTime.getDate()).padStart(2, '0');
+            const dateStr = `${year}${month}${day}`;
+            
+            const hours = istTime.getHours();
+            const minutes = istTime.getMinutes();
+            const totalMinutes = (hours * 60) + minutes;
+            
+            const baseNum = 10000000 + totalMinutes + 1;
+            return {
+                fullPeriod: `${dateStr}01${baseNum}`,
+                shortPeriod: String(baseNum).slice(-5)
+            };
+        }
 
-        // हर 1 मिनट (60 सेकंड) या ऑटोमैटिक राउंड चेंज पर अपने आप अपडेट होने के लिए
-        setInterval(fetchPrediction, 10000);
+        // स्कैन बटन या ऑटोमैटिक ट्रिगर पर सर्वर से पिछला डेटा एनालाइज कराकर प्रेडिक्शन लाना
+        function triggerScan() {
+            const livePeriodObj = getAutoLivePeriod();
+            
+            fetch('/get_prediction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ period: livePeriodObj.fullPeriod })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('predSize').innerText = data.size;
+                document.getElementById('predNumber').innerText = data.number;
+                document.getElementById('prdDisplay').innerText = '#PRD: ' + livePeriodObj.shortPeriod;
+            })
+            .catch(err => console.error('Error:', err));
+        }
+
+        // लाइव सेकंड टाइमर (1 मिनट का काउंटर) और ऑटोमैटिक स्कैन
+        let timeLeft = 60 - new Date().getSeconds();
+        setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+                timeLeft = 60;
+                triggerScan(); // पीरियड बदलते ही ऑटो स्कैन और प्रेडिक्शन फेच होगा
+            }
+            document.getElementById('secTimer').innerText = timeLeft + 's';
+            
+            // पीरियड को हर सेकंड लाइव रखना
+            const livePeriodObj = getAutoLivePeriod();
+            document.getElementById('prdDisplay').innerText = '#PRD: ' + livePeriodObj.shortPeriod;
+        }, 1000);
+
+        window.onload = triggerScan;
     </script>
 </body>
 </html>
@@ -277,25 +378,19 @@ HTML_TEMPLATE = """
 def index():
     return render_template_string(HTML_TEMPLATE)
 
-@app.route('/get_prediction')
+@app.route('/get_prediction', methods=['POST'])
 def get_prediction():
-    # --- ऑटोमैटिक पीरियड नंबर जनरेशन (समय के हिसाब से सटीक लाइव पीरियड) ---
-    now = datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30) # IST Timezone
-    date_str = now.strftime('%Y%m%d')
-    total_minutes = now.hour * 60 + now.minute
-    base_period_num = 10000000 + total_minutes + 1
-    current_period_full = f"{date_str}01{base_period_num}"
+    from flask import request
+    req_data = request.get_json() or {}
+    current_period_full = req_data.get('period', '2026110800010000')
 
     # --- पिछले डेटा (Historical Data) का पैटर्न एनालिसिस इंजन ---
     if history_records:
-        # पिछले नंबरों की फ़्रीक्वेंसी और ट्रेंड का हिसाब लगाना
-        recent_numbers = [r['number'] for r in history_records[-10:]]
+        recent_numbers = [r['number'] for r in history_records[-15:]]
+        avg_trend = sum(recent_numbers) / len(recent_numbers)
         
-        # पिछले डेटा पैटर्न के आधार पर अगला संभावित स्मार्ट नंबर चुनना
-        # (यह सीधे पीरियड नंबर को जोड़ने के बजाय पिछले परिणामों के ट्रेंड को परखता है)
-        avg_recent = sum(recent_numbers) / len(recent_numbers)
-        if avg_recent > 4.5:
-            # यदि पिछلا औसत बड़ा है, तो पैटर्न आधारित स्मार्ट चयन
+        # पिछले डेटा और ट्रेंड के आधार पर अगला सटीक नंबर और साइज निकालना
+        if avg_trend > 4.5:
             predicted_number = random.choice([0, 1, 2, 3, 4, 8])
         else:
             predicted_number = random.choice([5, 6, 7, 8, 9, 1])
@@ -304,7 +399,7 @@ def get_prediction():
 
     predicted_size = "BIG" if predicted_number >= 5 else "SMALL"
 
-    # नए परिणाम को पिछले डेटा इतिहास (History List) में जोड़ना ताकि अगला एनालिसिस और बेहतर हो सके
+    # नए परिणाम को इतिहास में जोड़ना ताकि अगला एनालिसिस और सटीक हो सके
     history_records.append({
         'period': current_period_full,
         'number': predicted_number,
@@ -312,12 +407,10 @@ def get_prediction():
         'color': 'Red' if predicted_number % 2 == 0 else 'Green'
     })
     
-    # लिस्ट को सीमित रखना ताकि मेमोरी पर लोड न पड़े (पिछले 50 रिकॉर्ड्स)
     if len(history_records) > 50:
         history_records.pop(0)
 
     return jsonify({
-        'period': current_period_full[-5:],  # पैनल पर दिखने वाले आखिरी अंक (जैसे 10657)
         'number': predicted_number,
         'size': predicted_size
     })
