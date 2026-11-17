@@ -1,6 +1,7 @@
 from flask import Flask, render_template_string, jsonify, request
 import datetime
 import hashlib
+import random
 
 app = Flask(__name__)
 
@@ -232,13 +233,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 <button class="btn-resize" onclick="changeSize(0.1)" title="Zoom In">+</button>
                 <button class="btn-resize" onclick="changeSize(-0.1)" title="Zoom Out">-</button>
             </div>
-            <span class="badge-active">MANUAL SCAN</span>
+            <span class="badge-active">AUTO SCAN</span>
         </div>
 
         <div class="game-brand">BDG WIN</div>
 
         <div class="status-row">
-            <span>STATUS: <b>READY</b></span>
+            <span>STATUS: <b id="statusText">SYNC</b></span>
             <span>SEC: <b id="secTime">60</b></span>
             <span>ACC: <b id="accuracy">99.7%</b></span>
         </div>
@@ -248,10 +249,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div class="pred-ball" id="predNumber">--</div>
         </div>
 
-        <div class="period-display" id="prdDisplay">PRD: Click Scan</div>
+        <div class="period-display" id="prdDisplay">PRD: Loading...</div>
 
         <div class="button-group">
-            <button class="btn btn-scan" onclick="triggerScan()">SCAN NOW</button>
+            <button class="btn btn-scan" onclick="fetchPrediction()">FORCE SCAN</button>
             <button class="btn btn-hide" onclick="toggleHide()">HIDE</button>
         </div>
     </div>
@@ -317,9 +318,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             return `${dateStr}1000${exactPeriodNum}`;
         }
 
-        function triggerScan() {
-            const livePeriod = getWinGoLivePeriod();
+        let lastFetchedPeriod = "";
 
+        function fetchPrediction() {
+            const livePeriod = getWinGoLivePeriod();
             document.getElementById('prdDisplay').innerText = "PRD: " + livePeriod;
 
             fetch('/get_prediction', {
@@ -336,12 +338,20 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             .catch(err => console.error("Error:", err));
         }
 
+        // ऑटो-स्कैन और टाइमर लूप (जैसे पहले था)
         setInterval(() => {
-            let secNow = new Date().getSeconds();
+            let now = new Date();
+            let secNow = now.getSeconds();
             let timeLeft = 60 - secNow;
             if (timeLeft === 60) timeLeft = 0;
 
             document.getElementById('secTime').innerText = timeLeft + 's';
+
+            let currentPeriod = getWinGoLivePeriod();
+            if (currentPeriod !== lastFetchedPeriod) {
+                lastFetchedPeriod = currentPeriod;
+                fetchPrediction();
+            }
         }, 1000);
     </script>
 </body>
@@ -374,7 +384,7 @@ def get_prediction():
     current_digit_sum = sum(int(d) for d in str(base_num))
     
     historical_momentum = sum(p % 3 for p in history_records[-10:]) if total_records >= 10 else total_records
-    master_seed = f"MANUAL_PRO_SCAN_{base_num}_{cumulative_sum}_{historical_momentum}"
+    master_seed = f"AUTO_SCAN_BASE_{base_num}_{cumulative_sum}_{historical_momentum}"
 
     hasher = hashlib.sha256(master_seed.encode())
     digest = int(hasher.hexdigest(), 16)
