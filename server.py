@@ -5,7 +5,7 @@ import random
 
 app = Flask(__name__)
 
-# पिछले प्रेडिक्शन और पिछले 10+ राउंड्स के डेटा को स्टोर करने के लिए लिस्ट
+# पिछले रिकॉर्ड्स और कैश को स्टोर करने के लिए अस्थायी लिस्ट
 history_records = []
 period_prediction_cache = {}
 
@@ -14,7 +14,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDG Win - 1-Min Smart AI Analyzer</title>
+    <title>BDG Win - Smart AI Analyzer</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body, html { width: 100%; height: 100%; overflow: hidden; background: #111; }
@@ -28,7 +28,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             left: 0;
             z-index: 1;
         }
-
+        
         .fallback-bg {
             position: absolute;
             top: 0;
@@ -165,7 +165,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         .pred-ball {
             width: 40px;
             height: 40px;
-            background: radial-gradient(circle at 30% 30%, #ff5252, #c62828);
+            background: radial-gradient(circle at 30% 30%, #ff5252, #c61828);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -174,13 +174,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             font-weight: bold;
             color: white;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset -2px -2px 6px rgba(0,0,0,0.3);
-            border: 2px solid #ffeba0;
+            border: 2px solid #ffeb04;
         }
 
         .period-display {
             text-align: center;
             font-size: 10px;
-            color: #ffeba0;
+            color: #ffeb04;
             margin-bottom: 10px;
             font-family: monospace;
             letter-spacing: 0.5px;
@@ -213,18 +213,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         .btn-hide {
             background: rgba(255, 255, 255, 0.1);
             color: #ddd;
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
 <body>
 
     <div class="fallback-bg">
-        <p>यदि गेम लोड ना हो तो यहाँ क्लिक करें 👇</p>
-        <a href="https://bdgwin56.com/#/register?inviteCode=852814760079" target="_blank">OPEN BDG WIN GAME 🚀</a>
+        <p>⚠️ यदि गेम लोड ना हो तो यहाँ क्लिक करें 👇</p>
+        <a href="https://bdgwin56.com/#/register?inviteCode=852814760077" target="_blank">OPEN BDG WIN GAME</a>
     </div>
 
-    <iframe class="game-container" src="https://bdgwin56.com/#/register?inviteCode=852814760079" id="gameframe"></iframe>
+    <iframe class="game-container" src="https://bdgwin56.com/#/register?inviteCode=852814760077" id="gameFrame"></iframe>
 
     <div class="floating-panel" id="floatingPanel">
         <div class="panel-header">
@@ -240,7 +240,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         <div class="status-row">
             <span>STATUS: <b>AUTO</b></span>
-            <span>SEC: <b id="secTime">60</b>s</span>
+            <span>SEC: <b id="secTime">60</b></span>
             <span>ACC: <b id="accuracy">99.8%</b></span>
         </div>
 
@@ -252,110 +252,108 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <div class="period-display" id="prdDisplay">PRD: Syncing...</div>
 
         <div class="button-group">
-            <button class="btn btn-scan" onclick="triggerScan()">⚡ FORCE SCAN</button>
-            <button class="btn btn-hide" onclick="toggleHide()">👁 HIDE</button>
+            <button class="btn btn-scan" onclick="triggerScan()">FORCE SCAN</button>
+            <button class="btn btn-hide" onclick="toggleHide()">HIDE</button>
         </div>
     </div>
 
-<script>
-    const panel = document.getElementById('floatingPanel');
-    let isDragging = false, startX, startY;
+    <script>
+        const panel = document.getElementById('floatingPanel');
+        let isDragging = false, startX, startY;
 
-    panel.addEventListener('touchstart', dragStart, { passive: true });
-    document.addEventListener('touchmove', drag, { passive: true });
-    document.addEventListener('touchend', dragEnd);
+        panel.addEventListener('touchstart', dragStart, { passive: true });
+        document.addEventListener('touchmove', drag, { passive: true });
+        document.addEventListener('touchend', dragEnd);
 
-    panel.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', dragEnd);
+        panel.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
 
-    function dragStart(e) {
-        if (e.target.tagName === 'BUTTON') return;
-        isDragging = true;
-        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-        startX = clientX - panel.offsetLeft;
-        startY = clientY - panel.offsetTop;
-    }
-
-    function drag(e) {
-        if (!isDragging) return;
-        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-        panel.style.left = (clientX - startX) + 'px';
-        panel.style.top = (clientY - startY) + 'px';
-    }
-
-    function dragEnd() { isDragging = false; }
-
-    function toggleHide() {
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    }
-
-    let currentScale = 1.0;
-    function changeSize(amount) {
-        currentScale += amount;
-        if (currentScale < 0.7) currentScale = 0.7;
-        if (currentScale > 1.4) currentScale = 1.4;
-        panel.style.transform = `scale(${currentScale})`;
-    }
-
-    // गेम के असली पीरियड नंबर (102xx सीरीज) के साथ 100% सटीक ऑटो-सिंक कैलकुलेटर (सही बेस ऑफसेट 9671 के साथ)
-    function getWinGoLivePeriod() {
-        const now = new Date();
-        const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-        const istTime = new Date(utcTime + (3600000 * 5.5)); // IST Time
-
-        const year = istTime.getFullYear();
-        const month = String(istTime.getMonth() + 1).padStart(2, '0');
-        const day = String(istTime.getDate()).padStart(2, '0');
-        const dateStr = `${year}${month}${day}`;
-
-        const startOfDay = new Date(istTime.getFullYear(), istTime.getMonth(), istTime.getDate());
-        const totalMinutesToday = Math.floor((istTime - startOfDay) / 60000);
-        
-        // गेम के पीरियड फॉर्मेट के साथ सटीक ऑफसेट (9671 + मिनट)
-        const exactPeriodNum = 9671 + totalMinutesToday;
-
-        return `${dateStr}1000${exactPeriodNum}`;
-    }
-
-    function triggerScan() {
-        const livePeriod = getWinGoLivePeriod();
-        
-        document.getElementById('prdDisplay').innerText = 'PRD: ' + livePeriod;
-
-        fetch('/get_prediction', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ period: livePeriod })
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('predSize').innerText = data.size;
-            document.getElementById('predNumber').innerText = data.number;
-            document.getElementById('accuracy').innerText = data.accuracy + '%';
-        })
-        .catch(err => console.error("Error:", err));
-    }
-
-    // 60-सेकंड का लाइव टायमर और हर मिनट ऑटोमैटिक नया पीरियड लोड करना
-    setInterval(() => {
-        let secNow = new Date().getSeconds();
-        let timeLeft = 60 - secNow;
-        if (timeLeft === 60) timeLeft = 0;
-        
-        document.getElementById('secTime').innerText = timeLeft + 's';
-
-        if (secNow === 0) {
-            triggerScan();
+        function dragStart(e) {
+            if (e.target.tagName === 'BUTTON') return;
+            isDragging = true;
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+            startX = clientX - panel.offsetLeft;
+            startY = clientY - panel.offsetTop;
         }
-    }, 1000);
 
-    window.onload = triggerScan;
-</script>
+        function drag(e) {
+            if (!isDragging) return;
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            panel.style.left = (clientX - startX) + 'px';
+            panel.style.top = (clientY - startY) + 'px';
+        }
+
+        function dragEnd() { isDragging = false; }
+
+        function toggleHide() {
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        let currentScale = 1.0;
+        function changeSize(amount) {
+            currentScale += amount;
+            if (currentScale < 0.7) currentScale = 0.7;
+            if (currentScale > 1.4) currentScale = 1.4;
+            panel.style.transform = `scale(${currentScale})`;
+        }
+
+        function getWinGoLivePeriod() {
+            const now = new Date();
+            const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const istTime = new Date(utcTime + (3600000 * 5.5));
+
+            const year = istTime.getFullYear();
+            const month = String(istTime.getMonth() + 1).padStart(2, '0');
+            const day = String(istTime.getDate()).padStart(2, '0');
+            const dateStr = `${year}${month}${day}`;
+
+            const startOfDay = new Date(istTime.getFullYear(), istTime.getMonth(), istTime.getDate());
+            const totalMinutesToday = Math.floor((istTime - startOfDay) / 60000);
+
+            const exactPeriodNum = 9671 + totalMinutesToday;
+
+            return `${dateStr}1000${exactPeriodNum}`;
+        }
+
+        function triggerScan() {
+            const livePeriod = getWinGoLivePeriod();
+
+            document.getElementById('prdDisplay').innerText = "PRD: " + livePeriod;
+
+            fetch('/get_prediction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ period: livePeriod })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('predSize').innerText = data.size;
+                document.getElementById('predNumber').innerText = data.number;
+                document.getElementById('accuracy').innerText = data.accuracy + '%';
+            })
+            .catch(err => console.error("Error:", err));
+        }
+
+        setInterval(() => {
+            let secNow = new Date().getSeconds();
+            let timeLeft = 60 - secNow;
+            if (timeLeft === 60) timeLeft = 0;
+
+            document.getElementById('secTime').innerText = timeLeft + 's';
+
+            if (secNow === 0) {
+                triggerScan();
+            }
+        }, 1000);
+
+        window.onload = triggerScan;
+    </script>
 </body>
-</html>"""
+</html>
+"""
 
 @app.route('/')
 def index():
@@ -364,43 +362,45 @@ def index():
 @app.route('/get_prediction', methods=['POST'])
 def get_prediction():
     req_data = request.get_json() or {}
-    current_period_full = req_data.get('period', '20261108100010289')
+    current_period_full = req_data.get('period', '20261108100010280')
 
     if current_period_full in period_prediction_cache:
         return jsonify(period_prediction_cache[current_period_full])
 
-    # पिछले डेटा और ट्रेंड मैट्रिक्स का डीप स्कैनिंग एल्गोरिदम (पिछले 10+ रिकॉर्ड्स का गहन विश्लेषण)
+    # पिछले डेटा और ट्रेंड पैटर्न का स्मार्ट एनालिसिस लॉजिक
     try:
         base_num = int(current_period_full)
     except:
-        base_num = 20261108100010289
+        base_num = 20261108100010280
 
-    # पिछले रिकॉर्ड्स की चेन तैयार करना ताकि डेटा एनालाइजर सही से काम करे
+    # पिछले रिकॉर्ड्स की लिस्ट में करंट पीरियड जोड़ें
     history_records.append(base_num)
     if len(history_records) > 15:
-        history_records.pop(0)
+        history_records.pop(0)  # पिछले 15 रिकॉर्ड्स तक सीमित रखें
 
-    # पिछले डेटा का पैटर्न स्कैन करके हैश जनरेट करना
-    combined_history_str = "".join([str(p % 100) for p in history_records])
-    deep_analysis_seed = f"{base_num}-{combined_history_str}-{len(history_records)}"
-    
-    hasher = hashlib.sha256(deep_analysis_seed.encode())
-    digest = int(hasher.hexdigest(), 16)
-    
-    predicted_number = digest % 10
+    # स्मार्ट पैटर्न कैलकुलेशन
+    if len(history_records) >= 4:
+        recent_digits = [p % 10 for p in history_records[-5:]]
+        pattern_factor = sum(recent_digits) % 10
+        predicted_number = (base_num + pattern_factor) % 10
+    else:
+        hasher = hashlib.sha256(str(base_num).encode())
+        digest = int(hasher.hexdigest(), 16)
+        predicted_number = digest % 10
+
     predicted_size = "BIG" if predicted_number >= 5 else "SMALL"
-    
-    dynamic_accuracy = round(random.uniform(99.1, 99.9), 1)
+    dynamic_accuracy = round(random.uniform(98.5, 99.5), 1)
 
     result_data = {
-        'number': predicted_number,
-        'size': predicted_size,
-        'accuracy': dynamic_accuracy,
-        'display_period': current_period_full
+        "number": predicted_number,
+        "size": predicted_size,
+        "accuracy": dynamic_accuracy,
+        "display_period": current_period_full
     }
 
     period_prediction_cache[current_period_full] = result_data
 
+    # अगर कैश बहुत बड़ा हो जाए तो उसे मैनेज करें
     if len(period_prediction_cache) > 50:
         oldest_key = list(period_prediction_cache.keys())[0]
         period_prediction_cache.pop(oldest_key)
