@@ -11,7 +11,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDGWin Pro AI Analyzer</title>
+    <title>BDGWin Fixed Floating AI Analyzer</title>
     <style>
         * {
             box-sizing: border-box;
@@ -24,30 +24,27 @@ HTML_TEMPLATE = """
             background: #090d16;
             height: 100vh;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
-        /* फ्लोटिंग और ड्रैगेबल पैनल */
+        /* FIXED FLOATING PANEL - यह स्क्रीन पर हमेशा कोने में तैरता रहेगा */
         #panel {
-            position: absolute;
-            top: 30px;
-            left: 30px;
-            width: 340px;
-            background: rgba(13, 20, 38, 0.95);
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 330px;
+            background: rgba(13, 20, 38, 0.96);
             backdrop-filter: blur(15px);
-            border: 1px solid rgba(56, 189, 248, 0.5);
+            border: 1px solid rgba(56, 189, 248, 0.6);
             border-radius: 16px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(56, 189, 248, 0.4);
             color: #ffffff;
-            z-index: 9999;
+            z-index: 999999;
             user-select: none;
             transition: transform 0.1s ease;
         }
 
         .panel-header {
-            padding: 12px 16px;
+            padding: 10px 14px;
             background: linear-gradient(135deg, #0284c7, #1d4ed8);
             border-top-left-radius: 15px;
             border-top-right-radius: 15px;
@@ -56,7 +53,7 @@ HTML_TEMPLATE = """
             justify-content: space-between;
             align-items: center;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 12px;
             letter-spacing: 0.5px;
         }
 
@@ -66,7 +63,7 @@ HTML_TEMPLATE = """
             color: white;
             cursor: pointer;
             font-size: 14px;
-            margin-left: 8px;
+            margin-left: 6px;
             transition: opacity 0.2s;
         }
 
@@ -75,24 +72,23 @@ HTML_TEMPLATE = """
         }
 
         .panel-body {
-            padding: 14px;
+            padding: 12px;
         }
 
-        /* गेम लिंक बटन वापस जोड़ दिया गया है */
+        /* गेम लिंक बटन */
         .game-link-btn {
             display: block;
             width: 100%;
             background: linear-gradient(135deg, #22c55e, #15803d);
             color: white;
             text-align: center;
-            padding: 8px;
+            padding: 7px;
             border-radius: 8px;
             font-size: 11px;
             font-weight: bold;
             text-decoration: none;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
-            transition: opacity 0.2s;
         }
 
         .game-link-btn:hover {
@@ -101,7 +97,7 @@ HTML_TEMPLATE = """
 
         /* UID कनेक्शन सेक्शन */
         .uid-section {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             display: flex;
             gap: 6px;
         }
@@ -110,8 +106,8 @@ HTML_TEMPLATE = """
             flex: 1;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            padding: 6px 10px;
+            border-radius: 6px;
+            padding: 5px 8px;
             color: #fff;
             font-size: 11px;
             outline: none;
@@ -125,22 +121,17 @@ HTML_TEMPLATE = """
             background: #10b981;
             border: none;
             color: white;
-            padding: 6px 10px;
-            border-radius: 8px;
+            padding: 5px 8px;
+            border-radius: 6px;
             font-size: 11px;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .uid-section button:hover {
-            background: #059669;
         }
 
         #uidStatus {
-            font-size: 10px;
+            font-size: 9px;
             color: #10b981;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             display: none;
             font-weight: 600;
         }
@@ -148,10 +139,10 @@ HTML_TEMPLATE = """
         .info-box {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            padding: 8px 10px;
-            margin-bottom: 8px;
-            font-size: 12px;
+            border-radius: 6px;
+            padding: 6px 8px;
+            margin-bottom: 6px;
+            font-size: 11px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -163,56 +154,55 @@ HTML_TEMPLATE = """
 
         #analyzeStatus {
             text-align: center;
-            font-size: 11px;
+            font-size: 10px;
             color: #f59e0b;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: 600;
-            letter-spacing: 0.5px;
-            min-height: 16px;
+            min-height: 14px;
         }
 
         .result-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 8px;
+            gap: 6px;
+            margin-bottom: 6px;
         }
 
         .result-card {
             background: rgba(56, 189, 248, 0.05);
             border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: 8px;
-            padding: 8px;
+            border-radius: 6px;
+            padding: 6px;
             text-align: center;
         }
 
         .result-card .label {
-            font-size: 10px;
+            font-size: 9px;
             color: #94a3b8;
             margin-bottom: 2px;
         }
 
         .result-card .value {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             color: #f8fafc;
         }
 
-        /* पिछले डेटा की हिस्ट्री */
+        /* पिछले 10 डेटा की हिस्ट्री बॉक्स */
         .history-container {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            padding: 6px;
-            margin-bottom: 8px;
-            max-height: 95px;
+            border-radius: 6px;
+            padding: 5px;
+            margin-bottom: 6px;
+            max-height: 85px;
             overflow-y: auto;
         }
 
         .history-title {
-            font-size: 10px;
+            font-size: 9px;
             color: #94a3b8;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
             text-align: center;
             font-weight: bold;
         }
@@ -220,9 +210,9 @@ HTML_TEMPLATE = """
         .history-item {
             display: flex;
             justify-content: space-between;
-            font-size: 10px;
-            padding: 3px 6px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 9px;
+            padding: 2px 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         }
 
         .history-item:last-child {
@@ -232,11 +222,11 @@ HTML_TEMPLATE = """
         .footer-info {
             display: flex;
             justify-content: space-between;
-            font-size: 11px;
+            font-size: 10px;
             color: #cbd5e1;
-            background: rgba(0, 0, 0, 0.25);
-            padding: 6px 10px;
-            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 8px;
+            border-radius: 6px;
         }
     </style>
 </head>
@@ -245,7 +235,7 @@ HTML_TEMPLATE = """
     <!-- फ्लोटिंग पैनल -->
     <div id="panel">
         <div class="panel-header" id="panelHeader">
-            <span>⚡ BDGWin Pro AI Analyzer</span>
+            <span>⚡ BDGWin Fixed AI Analyzer</span>
             <div class="controls">
                 <button onclick="changeSize(0.1)">+</button>
                 <button onclick="changeSize(-0.1)">-</button>
@@ -264,14 +254,14 @@ HTML_TEMPLATE = """
                 <input type="text" id="uidInput" placeholder="Enter Game UID">
                 <button onclick="connectUID()">Link</button>
             </div>
-            <div id="uidStatus">✓ UID Linked Successfully</div>
+            <div id="uidStatus">✓ UID Linked</div>
 
             <div class="info-box">
                 <span>Current Period:</span>
-                <strong id="prdDisplay" style="font-size: 11px; color: #38bdf8;">Loading...</strong>
+                <strong id="prdDisplay" style="font-size: 10px; color: #38bdf8;">Loading...</strong>
             </div>
 
-            <div id="analyzeStatus">⚡ AI Ready for Scan</div>
+            <div id="analyzeStatus">⚡ AI Synced</div>
 
             <div class="result-grid">
                 <div class="result-card">
@@ -284,11 +274,11 @@ HTML_TEMPLATE = """
                 </div>
             </div>
 
-            <!-- पिछले डेटा की हिस्ट्री -->
+            <!-- पिछले 10 लाइव डेटा की हिस्ट्री -->
             <div class="history-container">
-                <div class="history-title">-- LIVE ANALYZED DATA HISTORY --</div>
+                <div class="history-title">-- ACTUAL PERIOD HISTORY --</div>
                 <div id="historyList">
-                    <div style="text-align:center; color:#64748b; font-size:9px;">Waiting for scan...</div>
+                    <div style="text-align:center; color:#64748b; font-size:9px;">Loading...</div>
                 </div>
             </div>
 
@@ -383,7 +373,7 @@ HTML_TEMPLATE = """
             if (livePeriod !== lastFetchedPeriod) {
                 lastFetchedPeriod = livePeriod;
                 
-                document.getElementById('analyzeStatus').innerHTML = "🔄 Analyzing past data trends...";
+                document.getElementById('analyzeStatus').innerHTML = "🔄 Analyzing...";
                 document.getElementById('predSize').innerText = "...";
                 document.getElementById('predNumber').innerText = "...";
 
@@ -395,7 +385,7 @@ HTML_TEMPLATE = """
                     })
                     .then(response => response.json())
                     .then(data => {
-                        document.getElementById('analyzeStatus').innerHTML = "✨ Accurate Prediction Ready!";
+                        document.getElementById('analyzeStatus').innerHTML = "✨ Ready!";
                         document.getElementById('predSize').innerText = data.size;
                         document.getElementById('predNumber').innerText = data.number;
                         document.getElementById('accuracy').innerText = data.accuracy + '%';
@@ -404,9 +394,9 @@ HTML_TEMPLATE = """
                     })
                     .catch(err => {
                         console.error("Error:", err);
-                        document.getElementById('analyzeStatus').innerHTML = "⚠ Error fetching prediction!";
+                        document.getElementById('analyzeStatus').innerHTML = "⚠ Error!";
                     });
-                }, 1200);
+                }, 1000);
             }
         }
 
