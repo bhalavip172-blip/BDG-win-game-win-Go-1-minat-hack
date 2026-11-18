@@ -15,7 +15,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UID Connected Smart Analyzer</title>
+    <title>BDGWin Smart AI Analyzer</title>
     <style>
         * {
             box-sizing: border-box;
@@ -38,7 +38,7 @@ HTML_TEMPLATE = """
             top: 40px;
             left: 40px;
             width: 340px;
-            background: rgba(13, 20, 38, 0.93);
+            background: rgba(13, 20, 38, 0.95);
             backdrop-filter: blur(15px);
             border: 1px solid rgba(56, 189, 248, 0.4);
             border-radius: 16px;
@@ -79,6 +79,27 @@ HTML_TEMPLATE = """
 
         .panel-body {
             padding: 14px;
+        }
+
+        /* गेम लिंक बटन स्टाइल */
+        .game-link-btn {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            text-align: center;
+            padding: 7px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            text-decoration: none;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+            transition: opacity 0.2s;
+        }
+
+        .game-link-btn:hover {
+            opacity: 0.9;
         }
 
         /* UID कनेक्शन सेक्शन */
@@ -180,6 +201,7 @@ HTML_TEMPLATE = """
             color: #f8fafc;
         }
 
+        /* पिछले डेटा की हिस्ट्री */
         .history-container {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -225,7 +247,7 @@ HTML_TEMPLATE = """
 
     <div id="panel">
         <div class="panel-header" id="panelHeader">
-            <span>⚡ UID LINKED PREDICTOR</span>
+            <span>⚡ BDGWin AI Analyzer</span>
             <div class="controls">
                 <button onclick="changeSize(0.1)">+</button>
                 <button onclick="changeSize(-0.1)">-</button>
@@ -234,6 +256,11 @@ HTML_TEMPLATE = """
         </div>
         
         <div class="panel-body" id="panelBody">
+            <!-- गेम लिंक बटन -->
+            <a href="https://bdgwin37.com/#/register?invitationCode=8528414760979" target="_blank" class="game-link-btn">
+                🔗 Open BDGWin Game Link
+            </a>
+
             <!-- UID कनेक्ट करने का बॉक्स -->
             <div class="uid-section">
                 <input type="text" id="uidInput" placeholder="Enter Game UID">
@@ -288,7 +315,7 @@ HTML_TEMPLATE = """
         document.addEventListener('touchend', dragEnd);
 
         function dragStart(e) {
-            if (e.target.tagName === 'BUTTON') return;
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
             isDragging = true;
             const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
             const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
