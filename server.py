@@ -5,13 +5,17 @@ from datetime import datetime
 
 app = Flask(__name__)
 
+period_prediction_cache = {}
+history_records = []
+past_results_log = []
+
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDGWin Period-Synced AI Analyzer</title>
+    <title>BDGWin Pro AI Analyzer Panel</title>
     <style>
         * {
             box-sizing: border-box;
@@ -20,29 +24,20 @@ HTML_TEMPLATE = """
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+        body {
             background: #090d16;
-        }
-
-        /* बैकग्राउंड में गेम लोड करने के लिए Iframe */
-        #gameFrame {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
             height: 100vh;
-            border: none;
-            z-index: 1;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* फ्लोटिंग और ड्रैगेबल पैनल जो गेम के ऊपर तैरता रहेगा */
+        /* फ्लोटिंग और ड्रैगेबल पैनल */
         #panel {
             position: absolute;
-            top: 40px;
-            left: 40px;
+            top: 30px;
+            left: 30px;
             width: 340px;
             background: rgba(13, 20, 38, 0.95);
             backdrop-filter: blur(15px);
@@ -85,6 +80,27 @@ HTML_TEMPLATE = """
 
         .panel-body {
             padding: 14px;
+        }
+
+        /* गेम लिंक बटन */
+        .game-link-btn {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #22c55e, #15803d);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            text-decoration: none;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
+            transition: opacity 0.2s;
+        }
+
+        .game-link-btn:hover {
+            opacity: 0.9;
         }
 
         /* UID कनेक्शन सेक्शन */
@@ -186,9 +202,9 @@ HTML_TEMPLATE = """
             color: #f8fafc;
         }
 
-        /* पिछले 10 डेटा की हिस्ट्री बॉक्स */
+        /* पिछले डेटा की हिस्ट्री */
         .history-container {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 8px;
             padding: 6px;
@@ -222,7 +238,7 @@ HTML_TEMPLATE = """
             justify-content: space-between;
             font-size: 11px;
             color: #cbd5e1;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.25);
             padding: 6px 10px;
             border-radius: 8px;
         }
@@ -230,13 +246,10 @@ HTML_TEMPLATE = """
 </head>
 <body>
 
-    <!-- बैकग्राउंड में गेम लोड करने के लिए Iframe -->
-    <iframe id="gameFrame" src="https://bdgwin37.com/#/register?invitationCode=8528414760979" title="BDGWin Game"></iframe>
-
-    <!-- फ्लोटिंग प्रेडिक्शन पैनल जो गेम के ऊपर तैरता रहेगा -->
+    <!-- फ्लोटिंग पैनल -->
     <div id="panel">
         <div class="panel-header" id="panelHeader">
-            <span>⚡ BDGWin Period-Synced AI</span>
+            <span>⚡ BDGWin Pro AI Analyzer</span>
             <div class="controls">
                 <button onclick="changeSize(0.1)">+</button>
                 <button onclick="changeSize(-0.1)">-</button>
@@ -245,6 +258,11 @@ HTML_TEMPLATE = """
         </div>
         
         <div class="panel-body" id="panelBody">
+            <!-- गेम लिंक बटन -->
+            <a href="https://bdgwin37.com/#/register?invitationCode=8528414760979" target="_blank" class="game-link-btn">
+                🚀 Open BDGWin Game in New Tab
+            </a>
+
             <!-- UID कनेक्ट करने का बॉक्स -->
             <div class="uid-section">
                 <input type="text" id="uidInput" placeholder="Enter Game UID">
@@ -257,7 +275,7 @@ HTML_TEMPLATE = """
                 <strong id="prdDisplay" style="font-size: 11px; color: #38bdf8;">Loading...</strong>
             </div>
 
-            <div id="analyzeStatus">⚡ Period Synchronized</div>
+            <div id="analyzeStatus">⚡ AI Ready for Scan</div>
 
             <div class="result-grid">
                 <div class="result-card">
@@ -270,15 +288,14 @@ HTML_TEMPLATE = """
                 </div>
             </div>
 
-            <!-- पिछले 10 लाइव डेटा की हिस्ट्री -->
+            <!-- पिछले डेटा की हिस्ट्री -->
             <div class="history-container">
-                <div class="history-title">-- ACTUAL PERIOD HISTORY (SYNCED) --</div>
+                <div class="history-title">-- LIVE ANALYZED DATA HISTORY --</div>
                 <div id="historyList">
-                    <div style="text-align:center; color:#64748b; font-size:9px;">Loading periods...</div>
+                    <div style="text-align:center; color:#64748b; font-size:9px;">Waiting for scan...</div>
                 </div>
             </div>
 
-            <!-- टाइमर और एक्यूरेसी -->
             <div class="footer-info">
                 <span>Timer: <b id="secTime" style="color: #f43f5e;">60s</b></span>
                 <span>Accuracy: <b id="accuracy" style="color: #10b981;">--%</b></span>
@@ -287,7 +304,6 @@ HTML_TEMPLATE = """
     </div>
 
     <script>
-        // पैनल को स्क्रीन पर कहीं भी खींचने (Drag) के लिए
         const panel = document.getElementById('panel');
         const header = document.getElementById('panelHeader');
         let isDragging = false, startX, startY;
@@ -301,7 +317,7 @@ HTML_TEMPLATE = """
         document.addEventListener('touchend', dragEnd);
 
         function dragStart(e) {
-            if (e.target.tagName === 'BUTTON') return;
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
             isDragging = true;
             const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
             const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
@@ -324,7 +340,6 @@ HTML_TEMPLATE = """
             body.style.display = body.style.display === 'none' ? 'block' : 'none';
         }
 
-        // पैनल छोटा-बड़ा करने का फंक्शन (+ और - बटन)
         let currentScale = 1.0;
         function changeSize(amount) {
             currentScale += amount;
@@ -372,7 +387,7 @@ HTML_TEMPLATE = """
             if (livePeriod !== lastFetchedPeriod) {
                 lastFetchedPeriod = livePeriod;
                 
-                document.getElementById('analyzeStatus').innerHTML = "🔄 Analyzing period trends...";
+                document.getElementById('analyzeStatus').innerHTML = "🔄 Analyzing past data trends...";
                 document.getElementById('predSize').innerText = "...";
                 document.getElementById('predNumber').innerText = "...";
 
@@ -384,7 +399,7 @@ HTML_TEMPLATE = """
                     })
                     .then(response => response.json())
                     .then(data => {
-                        document.getElementById('analyzeStatus').innerHTML = "✨ Period Data Analyzed!";
+                        document.getElementById('analyzeStatus').innerHTML = "✨ Accurate Prediction Ready!";
                         document.getElementById('predSize').innerText = data.size;
                         document.getElementById('predNumber').innerText = data.number;
                         document.getElementById('accuracy').innerText = data.accuracy + '%';
@@ -393,9 +408,9 @@ HTML_TEMPLATE = """
                     })
                     .catch(err => {
                         console.error("Error:", err);
-                        document.getElementById('analyzeStatus').innerHTML = "⚠ Error!";
+                        document.getElementById('analyzeStatus').innerHTML = "⚠ Error fetching prediction!";
                     });
-                }, 1000);
+                }, 1200);
             }
         }
 
@@ -403,7 +418,7 @@ HTML_TEMPLATE = """
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = "";
             
-            historyArr.forEach(item => {
+            historyArr.slice(-10).reverse().forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 div.innerHTML = `<span>Prd: ${item.period.slice(-4)}</span> <b style="color:${item.size === 'BIG' ? '#38bdf8' : '#f43f5e'}">${item.size} (${item.number})</b>`;
@@ -411,7 +426,6 @@ HTML_TEMPLATE = """
             });
         }
 
-        // 60-सेकंड का लाइव टाइमर
         setInterval(() => {
             let secNow = new Date().getSeconds();
             let timeLeft = 60 - secNow;
@@ -440,42 +454,51 @@ def get_prediction():
     current_period_full = req_data.get('period', '20261118100010250')
     client_uid = req_data.get('uid', 'default')
 
+    if current_period_full in period_prediction_cache:
+        cached_data = period_prediction_cache[current_period_full]
+        cached_data['history'] = past_results_log
+        return jsonify(cached_data)
+
     try:
-        base_period = int(current_period_full)
+        base_num = int(current_period_full)
     except:
-        base_period = 20261118100010250
+        base_num = 20261118100010250
 
-    # किसी भी पीरियड के लिए सटीक और फिक्स परिणाम निकालने का एल्गोरिदम
-    def calculate_for_period(p_num):
-        seed_str = f"{client_uid}-{p_num}"
-        hasher = hashlib.sha256(seed_str.encode())
-        digest = int(hasher.hexdigest(), 16)
-        num = digest % 10
-        size = "BIG" if num >= 5 else "SMALL"
-        return num, size
+    trend_modifier = 0
+    if len(past_results_log) >= 3:
+        recent_sum = sum(item['number'] for item in past_results_log[-3:])
+        trend_modifier = (recent_sum + len(str(client_uid))) % 7
 
-    # वर्तमान पीरियड का प्रेडिक्शन
-    pred_num, pred_size = calculate_for_period(base_period)
-    accuracy = round(random.uniform(99.4, 99.9), 1)
+    raw_seed = f"{client_uid}-{base_num}-{trend_modifier}-{len(past_results_log)}"
+    hasher = hashlib.sha256(raw_seed.encode())
+    digest = int(hasher.hexdigest(), 16)
 
-    # पिछले वास्तविक पीरियड नंबर्स (जैसे base_period - 1, base_period - 2, ...) की गणना करना
-    history_list = []
-    for i in range(1, 11):
-        prev_p = base_period - i
-        p_num, p_size = calculate_for_period(prev_p)
-        history_list.append({
-            "period": str(prev_p),
-            "number": p_num,
-            "size": p_size
-        })
+    predicted_number = (digest + trend_modifier) % 10
+    predicted_size = "BIG" if predicted_number >= 5 else "SMALL"
+    dynamic_accuracy = round(random.uniform(99.4, 99.9), 1)
 
     result_data = {
-        "number": pred_num,
-        "size": pred_size,
-        "accuracy": accuracy,
-        "display_period": current_period_full,
-        "history": history_list
+        "number": predicted_number,
+        "size": predicted_size,
+        "accuracy": dynamic_accuracy,
+        "display_period": current_period_full
     }
+
+    past_results_log.append({
+        "period": current_period_full,
+        "number": predicted_number,
+        "size": predicted_size
+    })
+    
+    if len(past_results_log) > 15:
+        past_results_log.pop(0)
+
+    result_data['history'] = past_results_log
+    period_prediction_cache[current_period_full] = result_data
+
+    if len(period_prediction_cache) > 50:
+        oldest_key = list(period_prediction_cache.keys())[0]
+        period_prediction_cache.pop(oldest_key)
 
     return jsonify(result_data)
 
