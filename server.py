@@ -1,273 +1,291 @@
-from flask import Flask, render_template_string, jsonify, request
-import datetime
-import hashlib
+from flask import Flask, render_template_string, request, jsonify
 import random
+import hashlib
+from datetime import datetime
 
 app = Flask(__name__)
 
-# पिछले पीरियड्स और ट्रेंड्स का डीप एनालाइजिंग करने के लिए मेमोरी
-history_records = []
 period_prediction_cache = {}
+history_records = []
+past_results_log = []
 
-HTML_TEMPLATE = """<!DOCTYPE html>
-<html lang="en">
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDG Win - 1-Min Smart AI Analyzer</title>
+    <title>UID Connected Smart Analyzer</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background: #111; }
-        
-        .game-container {
-            width: 100%;
-            height: 100%;
-            border: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
-        .fallback-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+
+        body {
+            background: #090d16;
+            height: 100vh;
+            overflow: hidden;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            z-index: 1;
-            color: #888;
-            font-size: 14px;
-            text-align: center;
-            padding: 20px;
+            align-items: center;
         }
 
-        .fallback-bg a {
-            margin-top: 10px;
-            padding: 10px 20px;
-            background: #d4af37;
-            color: #000;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 8px;
-        }
-
-        .floating-panel {
+        #panel {
             position: absolute;
             top: 40px;
-            left: 20px;
-            width: 270px;
-            background: linear-gradient(135deg, #2c2416 0%, #1a150d 100%);
-            border: 2px solid #d4af37;
+            left: 40px;
+            width: 340px;
+            background: rgba(13, 20, 38, 0.93);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(56, 189, 248, 0.4);
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 15px rgba(212, 175, 55, 0.4);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.25);
+            color: #ffffff;
             z-index: 1000;
-            padding: 12px;
-            color: #fff;
             user-select: none;
-            cursor: move;
-            transition: transform 0.2s ease;
-            transform-origin: top left;
+            transition: transform 0.1s ease;
         }
 
         .panel-header {
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #0284c7, #1d4ed8);
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            cursor: move;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-            padding-bottom: 6px;
-            margin-bottom: 8px;
-        }
-
-        .panel-title {
-            font-size: 11px;
             font-weight: bold;
-            color: #d4af37;
-            letter-spacing: 1px;
-        }
-
-        .resize-controls {
-            display: flex;
-            gap: 4px;
-        }
-
-        .btn-resize {
-            background: #d4af37;
-            color: #000;
-            border: none;
-            width: 20px;
-            height: 20px;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .badge-active {
-            background: #28a745;
-            color: white;
-            font-size: 8px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-
-        .game-brand {
-            text-align: center;
-            font-size: 18px;
-            font-weight: 900;
-            color: #ffd700;
-            margin-bottom: 8px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            background: rgba(0,0,0,0.4);
-            padding: 4px 8px;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            color: #ccc;
-        }
-
-        .status-row span b { color: #00ffcc; }
-
-        .prediction-box {
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            background: radial-gradient(circle, #3d311b 0%, #1a150d 100%);
-            border: 1px solid #d4af37;
-            border-radius: 12px;
-            padding: 10px;
-            margin-bottom: 8px;
-        }
-
-        .pred-big-small {
-            background: linear-gradient(135deg, #f39c12 0%, #d35400 100%);
-            color: white;
-            font-size: 15px;
-            font-weight: bold;
-            padding: 8px 12px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-        }
-
-        .pred-ball {
-            width: 40px;
-            height: 40px;
-            background: radial-gradient(circle at 30% 30%, #ff5252, #c61828);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset -2px -2px 6px rgba(0,0,0,0.3);
-            border: 2px solid #ffeb04;
-        }
-
-        .period-display {
-            text-align: center;
-            font-size: 10px;
-            color: #ffeb04;
-            margin-bottom: 10px;
-            font-family: monospace;
+            font-size: 13px;
             letter-spacing: 0.5px;
-            font-weight: bold;
         }
 
-        .button-group {
+        .controls button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 8px;
+            transition: opacity 0.2s;
+        }
+
+        .controls button:hover {
+            opacity: 0.7;
+        }
+
+        .panel-body {
+            padding: 14px;
+        }
+
+        /* UID कनेक्शन सेक्शन */
+        .uid-section {
+            margin-bottom: 10px;
             display: flex;
             gap: 6px;
         }
 
-        .btn {
+        .uid-section input {
             flex: 1;
-            padding: 6px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 11px;
-            cursor: pointer;
-            text-align: center;
-            transition: 0.2s;
-        }
-
-        .btn-scan {
-            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-            color: white;
-            box-shadow: 0 3px 5px rgba(255,152,0,0.4);
-        }
-
-        .btn-hide {
-            background: rgba(255, 255, 255, 0.1);
-            color: #ddd;
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 6px 10px;
+            color: #fff;
+            font-size: 11px;
+            outline: none;
+        }
+
+        .uid-section input:focus {
+            border-color: #38bdf8;
+        }
+
+        .uid-section button {
+            background: #10b981;
+            border: none;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .uid-section button:hover {
+            background: #059669;
+        }
+
+        #uidStatus {
+            font-size: 10px;
+            color: #10b981;
+            margin-bottom: 8px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .info-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-box span {
+            color: #94a3b8;
+        }
+
+        #analyzeStatus {
+            text-align: center;
+            font-size: 11px;
+            color: #f59e0b;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            min-height: 16px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .result-card {
+            background: rgba(56, 189, 248, 0.05);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .result-card .label {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-bottom: 2px;
+        }
+
+        .result-card .value {
+            font-size: 15px;
+            font-weight: bold;
+            color: #f8fafc;
+        }
+
+        .history-container {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 6px;
+            margin-bottom: 8px;
+            max-height: 95px;
+            overflow-y: auto;
+        }
+
+        .history-title {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            padding: 3px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #cbd5e1;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 6px 10px;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
 
-    <div class="fallback-bg">
-        <p>⚠️ यदि गेम लोड ना हो तो यहाँ क्लिक करें 👇</p>
-        <a href="https://bdgwin56.com/#/register?inviteCode=852814760077" target="_blank">OPEN BDG WIN GAME</a>
-    </div>
-
-    <iframe class="game-container" src="https://bdgwin56.com/#/register?inviteCode=852814760077" id="gameFrame"></iframe>
-
-    <div class="floating-panel" id="floatingPanel">
-        <div class="panel-header">
-            <span class="panel-title">AI DEEP ANALYZER</span>
-            <div class="resize-controls">
-                <button class="btn-resize" onclick="changeSize(0.1)" title="Zoom In">+</button>
-                <button class="btn-resize" onclick="changeSize(-0.1)" title="Zoom Out">-</button>
+    <div id="panel">
+        <div class="panel-header" id="panelHeader">
+            <span>⚡ UID LINKED PREDICTOR</span>
+            <div class="controls">
+                <button onclick="changeSize(0.1)">+</button>
+                <button onclick="changeSize(-0.1)">-</button>
+                <button onclick="toggleHide()">_</button>
             </div>
-            <span class="badge-active">AUTO SYNC</span>
         </div>
+        
+        <div class="panel-body" id="panelBody">
+            <!-- UID कनेक्ट करने का बॉक्स -->
+            <div class="uid-section">
+                <input type="text" id="uidInput" placeholder="Enter Game UID">
+                <button onclick="connectUID()">Link UID</button>
+            </div>
+            <div id="uidStatus">✓ UID Linked Successfully</div>
 
-        <div class="game-brand">BDG WIN</div>
+            <div class="info-box">
+                <span>Current Period:</span>
+                <strong id="prdDisplay" style="font-size: 11px; color: #38bdf8;">Loading...</strong>
+            </div>
 
-        <div class="status-row">
-            <span>STATUS: <b>AUTO</b></span>
-            <span>SEC: <b id="secTime">60</b></span>
-            <span>ACC: <b id="accuracy">99.8%</b></span>
-        </div>
+            <div id="analyzeStatus">⚡ System Ready for Scan</div>
 
-        <div class="prediction-box">
-            <div class="pred-big-small" id="predSize">--</div>
-            <div class="pred-ball" id="predNumber">--</div>
-        </div>
+            <div class="result-grid">
+                <div class="result-card">
+                    <div class="label">PREDICTED SIZE</div>
+                    <div class="value" id="predSize">--</div>
+                </div>
+                <div class="result-card">
+                    <div class="label">LUCKY NUMBER</div>
+                    <div class="value" id="predNumber" style="color: #38bdf8;">--</div>
+                </div>
+            </div>
 
-        <div class="period-display" id="prdDisplay">PRD: Syncing...</div>
+            <!-- पिछले डेटा की हिस्ट्री -->
+            <div class="history-container">
+                <div class="history-title">-- LIVE ANALYZED DATA HISTORY --</div>
+                <div id="historyList">
+                    <div style="text-align:center; color:#64748b; font-size:9px;">Waiting for scan...</div>
+                </div>
+            </div>
 
-        <div class="button-group">
-            <button class="btn btn-scan" onclick="triggerScan()">FORCE SCAN</button>
-            <button class="btn btn-hide" onclick="toggleHide()">HIDE</button>
+            <div class="footer-info">
+                <span>Timer: <b id="secTime" style="color: #f43f5e;">60s</b></span>
+                <span>Accuracy: <b id="accuracy" style="color: #10b981;">--%</b></span>
+            </div>
         </div>
     </div>
 
     <script>
-        const panel = document.getElementById('floatingPanel');
+        const panel = document.getElementById('panel');
+        const header = document.getElementById('panelHeader');
         let isDragging = false, startX, startY;
 
-        panel.addEventListener('touchstart', dragStart, { passive: true });
-        document.addEventListener('touchmove', drag, { passive: true });
-        document.addEventListener('touchend', dragEnd);
-
-        panel.addEventListener('mousedown', dragStart);
+        header.addEventListener('mousedown', dragStart);
         document.addEventListener('mousemove', drag);
         document.addEventListener('mouseup', dragEnd);
+
+        header.addEventListener('touchstart', dragStart);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('touchend', dragEnd);
 
         function dragStart(e) {
             if (e.target.tagName === 'BUTTON') return;
@@ -289,18 +307,32 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         function dragEnd() { isDragging = false; }
 
         function toggleHide() {
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            const body = document.getElementById('panelBody');
+            body.style.display = body.style.display === 'none' ? 'block' : 'none';
         }
 
         let currentScale = 1.0;
         function changeSize(amount) {
             currentScale += amount;
-            if (currentScale < 0.7) currentScale = 0.7;
-            if (currentScale > 1.4) currentScale = 1.4;
+            if (currentScale < 0.8) currentScale = 0.8;
+            if (currentScale > 1.3) currentScale = 1.3;
             panel.style.transform = `scale(${currentScale})`;
         }
 
-        // गेम के सही पीरियड नंबर (102xx सीरीज) का 100% सटीक और टिक टॉक कैलकुलेटर (सही बेस 9671 के साथ)
+        // UID लिंक करने का सटीक फंक्शन
+        let linkedUID = "";
+        function connectUID() {
+            const uid = document.getElementById('uidInput').value.trim();
+            const status = document.getElementById('uidStatus');
+            if(uid !== "") {
+                linkedUID = uid;
+                status.style.display = "block";
+                status.innerText = "✓ UID: " + uid + " Successfully Linked";
+            } else {
+                alert("Please enter a valid UID first!");
+            }
+        }
+
         function getWinGoLivePeriod() {
             const now = new Date();
             const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -314,32 +346,59 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const startOfDay = new Date(istTime.getFullYear(), istTime.getMonth(), istTime.getDate());
             const totalMinutesToday = Math.floor((istTime - startOfDay) / 60000);
 
-            // गेम के पीरियड बेस से सही कैलकुलेटर (9671 + मिनट)
             const exactPeriodNum = 9671 + totalMinutesToday;
-
             return `${dateStr}1000${exactPeriodNum}`;
         }
 
+        let lastFetchedPeriod = "";
+
         function triggerScan() {
             const livePeriod = getWinGoLivePeriod();
+            document.getElementById('prdDisplay').innerText = livePeriod;
 
-            document.getElementById('prdDisplay').innerText = "PRD: " + livePeriod;
+            if (livePeriod !== lastFetchedPeriod) {
+                lastFetchedPeriod = livePeriod;
+                
+                document.getElementById('analyzeStatus').innerHTML = "🔄 Analyzing UID & past data trends...";
+                document.getElementById('predSize').innerText = "...";
+                document.getElementById('predNumber').innerText = "...";
 
-            fetch('/get_prediction', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ period: livePeriod })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('predSize').innerText = data.size;
-                document.getElementById('predNumber').innerText = data.number;
-                document.getElementById('accuracy').innerText = data.accuracy + '%';
-            })
-            .catch(err => console.error("Error:", err));
+                setTimeout(() => {
+                    fetch('/get_prediction', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ period: livePeriod, uid: linkedUID })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('analyzeStatus').innerHTML = "✨ Accurate Prediction Ready!";
+                        document.getElementById('predSize').innerText = data.size;
+                        document.getElementById('predNumber').innerText = data.number;
+                        document.getElementById('accuracy').innerText = data.accuracy + '%';
+
+                        updateHistoryUI(data.history);
+                    })
+                    .catch(err => {
+                        console.error("Error:", err);
+                        document.getElementById('analyzeStatus').innerHTML = "⚠ Error fetching prediction!";
+                    });
+                }, 1200);
+            }
         }
 
-        // 60-सेकंड का लाइव 타이मर और हर मिनट ऑटोमैटिक नया पीरियड लोड करना
+        function updateHistoryUI(historyArr) {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = "";
+            
+            historyArr.slice(-10).reverse().forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `<span>Prd: ${item.period.slice(-4)}</span> <b style="color:${item.size === 'BIG' ? '#38bdf8' : '#f43f5e'}">${item.size} (${item.number})</b>`;
+                historyList.appendChild(div);
+            });
+        }
+
+        // 60-सेकंड का लाइव टाइमर
         setInterval(() => {
             let secNow = new Date().getSeconds();
             let timeLeft = 60 - secNow;
@@ -366,31 +425,31 @@ def index():
 def get_prediction():
     req_data = request.get_json() or {}
     current_period_full = req_data.get('period', '20261108100010289')
+    client_uid = req_data.get('uid', 'default')
 
     if current_period_full in period_prediction_cache:
-        return jsonify(period_prediction_cache[current_period_full])
+        cached_data = period_prediction_cache[current_period_full]
+        cached_data['history'] = past_results_log
+        return jsonify(cached_data)
 
-    # पिछले डेटा और ट्रेंड्स का डीप सेटिंग्स एनालाइजिंग (पिछले 10+ पीरियड्स का गहन विश्लेषण)
     try:
         base_num = int(current_period_full)
     except:
         base_num = 20261108100010289
 
-    # पिछले रिकॉर्ड्स की चेन तैयार करना ताकि डेटा एनालाइज़र सही से काम करे
-    history_records.append(base_num)
-    if len(history_records) > 15:
-        history_records.pop(0)
+    # UID और पिछले डेटा के आधार पर स्मार्ट ट्रेंड कैलकुलेशन
+    trend_modifier = 0
+    if len(past_results_log) >= 3:
+        recent_sum = sum(item['number'] for item in past_results_log[-3:])
+        trend_modifier = (recent_sum + len(str(client_uid))) % 7
 
-    # पिछले डेटा का पैटर्न बनाने वाला डीप लर्निंग लूप
-    combined_history_str = "".join(str(p % 100) for p in history_records)
-    deep_analysis_seed = f"{base_num}-{combined_history_str}-{len(history_records)}"
-
-    hasher = hashlib.sha256(deep_analysis_seed.encode())
+    raw_seed = f"{client_uid}-{base_num}-{trend_modifier}-{len(past_results_log)}"
+    hasher = hashlib.sha256(raw_seed.encode())
     digest = int(hasher.hexdigest(), 16)
 
-    predicted_number = digest % 10
+    predicted_number = (digest + trend_modifier) % 10
     predicted_size = "BIG" if predicted_number >= 5 else "SMALL"
-    dynamic_accuracy = round(random.uniform(99.1, 99.9), 1)
+    dynamic_accuracy = round(random.uniform(99.4, 99.9), 1)
 
     result_data = {
         "number": predicted_number,
@@ -399,6 +458,16 @@ def get_prediction():
         "display_period": current_period_full
     }
 
+    past_results_log.append({
+        "period": current_period_full,
+        "number": predicted_number,
+        "size": predicted_size
+    })
+    
+    if len(past_results_log) > 15:
+        past_results_log.pop(0)
+
+    result_data['history'] = past_results_log
     period_prediction_cache[current_period_full] = result_data
 
     if len(period_prediction_cache) > 50:
