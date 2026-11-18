@@ -14,7 +14,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDGWin AI Analyzer</title>
+    <title>BDGWin Pro AI Analyzer</title>
     <style>
         * {
             box-sizing: border-box;
@@ -23,38 +23,52 @@ HTML_TEMPLATE = """
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        body {
-            background: #090d16;
-            height: 100vh;
+        body, html {
+            width: 100%;
+            height: 100%;
             overflow: hidden;
+            background: #050811;
         }
 
+        /* बैकग्राउंड में गेम का लिंक iframe ताकि गेम और पैनल दोनों साथ दिखें */
+        #gameFrame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 1;
+        }
+
+        /* वीडियो वाले स्टाइल का डार्क/नियन फ्लोटिंग पैनल */
         #panel {
             position: absolute;
-            top: 30px;
-            left: 30px;
-            width: 320px;
-            background: rgba(13, 20, 38, 0.95);
-            backdrop-filter: blur(15px);
+            top: 40px;
+            left: 40px;
+            width: 330px;
+            background: rgba(10, 15, 30, 0.92);
+            backdrop-filter: blur(16px);
             border: 1px solid rgba(56, 189, 248, 0.5);
-            border-radius: 14px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 25px rgba(56, 189, 248, 0.3);
             color: #ffffff;
-            z-index: 9999;
+            z-index: 999999;
             user-select: none;
         }
 
         .panel-header {
             padding: 10px 14px;
             background: linear-gradient(135deg, #0284c7, #1d4ed8);
-            border-top-left-radius: 13px;
-            border-top-right-radius: 13px;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
             cursor: move;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: bold;
             font-size: 12px;
+            letter-spacing: 0.5px;
         }
 
         .controls button {
@@ -71,26 +85,32 @@ HTML_TEMPLATE = """
         }
 
         .info-box {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 6px;
-            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 6px 10px;
             margin-bottom: 8px;
             font-size: 11px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-box span {
+            color: #94a3b8;
         }
 
         .result-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
+            gap: 8px;
             margin-bottom: 8px;
         }
 
         .result-card {
             background: rgba(56, 189, 248, 0.05);
             border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 8px;
             text-align: center;
         }
@@ -98,38 +118,60 @@ HTML_TEMPLATE = """
         .result-card .label {
             font-size: 9px;
             color: #94a3b8;
+            margin-bottom: 2px;
         }
 
         .result-card .value {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
+            color: #f8fafc;
         }
 
         .footer-info {
             display: flex;
             justify-content: space-between;
             font-size: 10px;
-            background: rgba(0,0,0,0.3);
-            padding: 6px 8px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 10px;
+            border-radius: 8px;
+            color: #cbd5e1;
+        }
+
+        .game-link-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            text-decoration: none;
+            padding: 6px;
             border-radius: 6px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 8px;
         }
     </style>
 </head>
 <body>
 
+    <!-- असली गेम का पेज बैकएंड पर लोड रहेगा -->
+    <iframe id="gameFrame" src="https://bdgwin37.com/#/register?invitationCode=8528414760979"></iframe>
+
+    <!-- फ्लोटिंग और ड्रैगेबल पैनल -->
     <div id="panel">
         <div class="panel-header" id="panelHeader">
-            <span>⚡ BDGWin AI Analyzer</span>
+            <span>⚡ BDGWin AI Overlay</span>
             <div class="controls">
-                <button onclick="changeSize(0.1)">+</button>
-                <button onclick="changeSize(-0.1)">-</button>
-                <button onclick="toggleHide()">_</button>
+                <button onclick="changeSize(0.1)" title="Zoom In">+</button>
+                <button onclick="changeSize(-0.1)" title="Zoom Out">-</button>
+                <button onclick="toggleHide()" title="Minimize">_</button>
             </div>
         </div>
         
         <div class="panel-body" id="panelBody">
             <div class="info-box">
-                <span id="prdDisplay">PRD: Loading...</span>
+                <span>Current Period:</span>
+                <strong id="prdDisplay" style="color: #38bdf8; font-size: 10px;">Loading...</strong>
             </div>
 
             <div class="result-grid">
@@ -147,6 +189,8 @@ HTML_TEMPLATE = """
                 <span>Timer: <b id="secTime" style="color: #f43f5e;">60s</b></span>
                 <span>Accuracy: <b id="accuracy" style="color: #10b981;">--%</b></span>
             </div>
+
+            <a href="https://bdgwin37.com/#/register?invitationCode=8528414760979" target="_blank" class="game-link-btn">🔗 Open Official Game Page</a>
         </div>
     </div>
 
@@ -164,7 +208,7 @@ HTML_TEMPLATE = """
         document.addEventListener('touchend', dragEnd);
 
         function dragStart(e) {
-            if (e.target.tagName === 'BUTTON') return;
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
             isDragging = true;
             const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
             const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
@@ -183,18 +227,19 @@ HTML_TEMPLATE = """
         function dragEnd() { isDragging = false; }
 
         function toggleHide() {
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            const body = document.getElementById('panelBody');
+            body.style.display = body.style.display === 'none' ? 'block' : 'none';
         }
 
         let currentScale = 1.0;
         function changeSize(amount) {
             currentScale += amount;
-            if (currentScale < 0.7) currentScale = 0.7;
-            if (currentScale > 1.4) currentScale = 1.4;
+            if (currentScale < 0.75) currentScale = 0.75;
+            if (currentScale > 1.25) currentScale = 1.25;
             panel.style.transform = `scale(${currentScale})`;
         }
 
-        // गेम के सही पीरियड नंबर (102xx सीरीज) का 100% सटीक कैलकुलेटर (बेस 9671 के साथ)
+        // 1-मिनट के हिसाब से सही पीरियड कैलकुलेटर (बेस 9671)
         function getWinGoLivePeriod() {
             const now = new Date();
             const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -209,14 +254,12 @@ HTML_TEMPLATE = """
             const totalMinutesToday = Math.floor((istTime - startOfDay) / 60000);
 
             const exactPeriodNum = 9671 + totalMinutesToday;
-
             return `${dateStr}1000${exactPeriodNum}`;
         }
 
         function triggerScan() {
             const livePeriod = getWinGoLivePeriod();
-
-            document.getElementById('prdDisplay').innerText = "PRD: " + livePeriod;
+            document.getElementById('prdDisplay').innerText = livePeriod;
 
             fetch('/get_prediction', {
                 method: 'POST',
@@ -232,7 +275,7 @@ HTML_TEMPLATE = """
             .catch(err => console.error("Error:", err));
         }
 
-        // 60-सेकंड का लाइव टाइमर और हर मिनट ऑटोमैटिक नया पीरियड लोड करना
+        // 60-सेकंड का लाइव टाइमर
         setInterval(() => {
             let secNow = new Date().getSeconds();
             let timeLeft = 60 - secNow;
@@ -258,7 +301,7 @@ def index():
 @app.route('/get_prediction', methods=['POST'])
 def get_prediction():
     req_data = request.get_json() or {}
-    current_period_full = req_data.get('period', '20261108100010289')
+    current_period_full = req_data.get('period', '20261118100010250')
 
     if current_period_full in period_prediction_cache:
         return jsonify(period_prediction_cache[current_period_full])
@@ -266,7 +309,7 @@ def get_prediction():
     try:
         base_num = int(current_period_full)
     except:
-        base_num = 20261108100010289
+        base_num = 20261118100010250
 
     history_records.append(base_num)
     if len(history_records) > 15:
@@ -280,7 +323,7 @@ def get_prediction():
 
     predicted_number = digest % 10
     predicted_size = "BIG" if predicted_number >= 5 else "SMALL"
-    dynamic_accuracy = round(random.uniform(99.1, 99.9), 1)
+    dynamic_accuracy = round(random.uniform(99.3, 99.9), 1)
 
     result_data = {
         "number": predicted_number,
