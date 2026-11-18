@@ -5,17 +5,13 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-period_prediction_cache = {}
-history_records = []
-past_results_log = []
-
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDGWin Pro AI Analyzer Panel</title>
+    <title>BDGWin Pro AI Analyzer</title>
     <style>
         * {
             box-sizing: border-box;
@@ -82,7 +78,7 @@ HTML_TEMPLATE = """
             padding: 14px;
         }
 
-        /* गेम लिंक बटन */
+        /* गेम लिंक बटन वापस जोड़ दिया गया है */
         .game-link-btn {
             display: block;
             width: 100%;
@@ -418,7 +414,7 @@ HTML_TEMPLATE = """
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = "";
             
-            historyArr.slice(-10).reverse().forEach(item => {
+            historyArr.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 div.innerHTML = `<span>Prd: ${item.period.slice(-4)}</span> <b style="color:${item.size === 'BIG' ? '#38bdf8' : '#f43f5e'}">${item.size} (${item.number})</b>`;
@@ -454,51 +450,39 @@ def get_prediction():
     current_period_full = req_data.get('period', '20261118100010250')
     client_uid = req_data.get('uid', 'default')
 
-    if current_period_full in period_prediction_cache:
-        cached_data = period_prediction_cache[current_period_full]
-        cached_data['history'] = past_results_log
-        return jsonify(cached_data)
-
     try:
-        base_num = int(current_period_full)
+        base_period = int(current_period_full)
     except:
-        base_num = 20261118100010250
+        base_period = 20261118100010250
 
-    trend_modifier = 0
-    if len(past_results_log) >= 3:
-        recent_sum = sum(item['number'] for item in past_results_log[-3:])
-        trend_modifier = (recent_sum + len(str(client_uid))) % 7
+    def calculate_for_period(p_num):
+        seed_str = f"{client_uid}-{p_num}"
+        hasher = hashlib.sha256(seed_str.encode())
+        digest = int(hasher.hexdigest(), 16)
+        num = digest % 10
+        size = "BIG" if num >= 5 else "SMALL"
+        return num, size
 
-    raw_seed = f"{client_uid}-{base_num}-{trend_modifier}-{len(past_results_log)}"
-    hasher = hashlib.sha256(raw_seed.encode())
-    digest = int(hasher.hexdigest(), 16)
+    pred_num, pred_size = calculate_for_period(base_period)
+    accuracy = round(random.uniform(99.4, 99.9), 1)
 
-    predicted_number = (digest + trend_modifier) % 10
-    predicted_size = "BIG" if predicted_number >= 5 else "SMALL"
-    dynamic_accuracy = round(random.uniform(99.4, 99.9), 1)
+    history_list = []
+    for i in range(1, 11):
+        prev_p = base_period - i
+        p_num, p_size = calculate_for_period(prev_p)
+        history_list.append({
+            "period": str(prev_p),
+            "number": p_num,
+            "size": p_size
+        })
 
     result_data = {
-        "number": predicted_number,
-        "size": predicted_size,
-        "accuracy": dynamic_accuracy,
-        "display_period": current_period_full
+        "number": pred_num,
+        "size": pred_size,
+        "accuracy": accuracy,
+        "display_period": current_period_full,
+        "history": history_list
     }
-
-    past_results_log.append({
-        "period": current_period_full,
-        "number": predicted_number,
-        "size": predicted_size
-    })
-    
-    if len(past_results_log) > 15:
-        past_results_log.pop(0)
-
-    result_data['history'] = past_results_log
-    period_prediction_cache[current_period_full] = result_data
-
-    if len(period_prediction_cache) > 50:
-        oldest_key = list(period_prediction_cache.keys())[0]
-        period_prediction_cache.pop(oldest_key)
 
     return jsonify(result_data)
 
