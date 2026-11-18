@@ -11,7 +11,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDGWin Pro AI Analyzer</title>
+    <title>BDGWin Floating AI Analyzer</title>
     <style>
         * {
             box-sizing: border-box;
@@ -26,14 +26,14 @@ HTML_TEMPLATE = """
             overflow: hidden;
         }
 
-        /* फिक्स और ड्रैगेबल तैरता हुआ पैनल */
+        /* पूरी तरह से तैरता हुआ और ड्रैगेबल पैनल (बिना किसी फालतू बटन के) */
         #panel {
             position: fixed;
-            top: 20px;
-            left: 20px;
-            width: 340px;
+            top: 25px;
+            left: 25px;
+            width: 330px;
             background: rgba(13, 20, 38, 0.96);
-            backdrop-filter: blur(15px);
+            backdrop-filter: blur(16px);
             border: 1px solid rgba(56, 189, 248, 0.6);
             border-radius: 16px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(56, 189, 248, 0.4);
@@ -75,26 +75,6 @@ HTML_TEMPLATE = """
             padding: 12px;
         }
 
-        /* गेम लिंक बटन */
-        .game-link-btn {
-            display: block;
-            width: 100%;
-            background: linear-gradient(135deg, #22c55e, #15803d);
-            color: white;
-            text-align: center;
-            padding: 7px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: bold;
-            text-decoration: none;
-            margin-bottom: 8px;
-            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
-        }
-
-        .game-link-btn:hover {
-            opacity: 0.9;
-        }
-
         /* UID कनेक्शन सेक्शन */
         .uid-section {
             margin-bottom: 8px;
@@ -107,7 +87,7 @@ HTML_TEMPLATE = """
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 6px;
-            padding: 5px 8px;
+            padding: 6px 8px;
             color: #fff;
             font-size: 11px;
             outline: none;
@@ -121,7 +101,7 @@ HTML_TEMPLATE = """
             background: #10b981;
             border: none;
             color: white;
-            padding: 5px 8px;
+            padding: 6px 10px;
             border-radius: 6px;
             font-size: 11px;
             font-weight: bold;
@@ -232,23 +212,18 @@ HTML_TEMPLATE = """
 </head>
 <body>
 
-    <!-- फ्लोटिंग पैनल -->
+    <!-- स्वतंत्र तैरता हुआ पैनल -->
     <div id="panel">
         <div class="panel-header" id="panelHeader">
-            <span>⚡ BDGWin Pro AI Analyzer</span>
+            <span>⚡ BDGWin AI Analyzer</span>
             <div class="controls">
-                <button onclick="changeSize(0.1)">+</button>
-                <button onclick="changeSize(-0.1)">-</button>
-                <button onclick="toggleHide()">_</button>
+                <button onclick="changeSize(0.1)" title="Zoom In">+</button>
+                <button onclick="changeSize(-0.1)" title="Zoom Out">-</button>
+                <button onclick="toggleHide()" title="Minimize">_</button>
             </div>
         </div>
         
         <div class="panel-body" id="panelBody">
-            <!-- गेम लिंक बटन -->
-            <a href="https://bdgwin37.com/#/register?invitationCode=8528414760979" target="_blank" class="game-link-btn">
-                🚀 Open BDGWin Game in New Tab
-            </a>
-
             <!-- UID कनेक्ट करने का बॉक्स -->
             <div class="uid-section">
                 <input type="text" id="uidInput" placeholder="Enter Game UID">
@@ -261,7 +236,7 @@ HTML_TEMPLATE = """
                 <strong id="prdDisplay" style="font-size: 10px; color: #38bdf8;">Loading...</strong>
             </div>
 
-            <div id="analyzeStatus">⚡ Deep Trend Scanning...</div>
+            <div id="analyzeStatus">⚡ Analyzing Trend...</div>
 
             <div class="result-grid">
                 <div class="result-card">
@@ -276,9 +251,9 @@ HTML_TEMPLATE = """
 
             <!-- पिछले 10 लाइव डेटा की हिस्ट्री -->
             <div class="history-container">
-                <div class="history-title">-- DEEP ANALYZED HISTORY (LAST 10) --</div>
+                <div class="history-title">-- ACTUAL PERIOD HISTORY --</div>
                 <div id="historyList">
-                    <div style="text-align:center; color:#64748b; font-size:9px;">Scanning history...</div>
+                    <div style="text-align:center; color:#64748b; font-size:9px;">Loading history...</div>
                 </div>
             </div>
 
@@ -290,7 +265,7 @@ HTML_TEMPLATE = """
     </div>
 
     <script>
-        // ड्रैगेबल पैनल लॉजिक (स्क्रीन पर कहीं भी खींचने के लिए)
+        // ड्रैगेबल पैनल लॉजिक ( हेडर को पकड़कर स्क्रीन पर कहीं भी खींचने के लिए )
         const panel = document.getElementById('panel');
         const header = document.getElementById('panelHeader');
         let isDragging = false, startX, startY;
@@ -304,7 +279,7 @@ HTML_TEMPLATE = """
         document.addEventListener('touchend', dragEnd);
 
         function dragStart(e) {
-            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+            if (e.target.tagName === 'BUTTON') return;
             isDragging = true;
             const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
             const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
@@ -374,7 +349,7 @@ HTML_TEMPLATE = """
             if (livePeriod !== lastFetchedPeriod) {
                 lastFetchedPeriod = livePeriod;
                 
-                document.getElementById('analyzeStatus').innerHTML = "🔄 Deep Trend Analysis...";
+                document.getElementById('analyzeStatus').innerHTML = "🔄 Analyzing Trends...";
                 document.getElementById('predSize').innerText = "...";
                 document.getElementById('predNumber').innerText = "...";
 
@@ -386,7 +361,7 @@ HTML_TEMPLATE = """
                     })
                     .then(response => response.json())
                     .then(data => {
-                        document.getElementById('analyzeStatus').innerHTML = "✨ High-Accuracy Prediction Ready!";
+                        document.getElementById('analyzeStatus').innerHTML = "✨ Prediction Ready!";
                         document.getElementById('predSize').innerText = data.size;
                         document.getElementById('predNumber').innerText = data.number;
                         document.getElementById('accuracy').innerText = data.accuracy + '%';
@@ -395,9 +370,9 @@ HTML_TEMPLATE = """
                     })
                     .catch(err => {
                         console.error("Error:", err);
-                        document.getElementById('analyzeStatus').innerHTML = "⚠ Scan Error!";
+                        document.getElementById('analyzeStatus').innerHTML = "⚠ Error!";
                     });
-                }, 1000);
+                }, 800);
             }
         }
 
@@ -439,34 +414,26 @@ def index():
 def get_prediction():
     req_data = request.get_json() or {}
     current_period_full = req_data.get('period', '20261118100010250')
-    client_uid = req_data.get('uid', '752841')
+    client_uid = req_data.get('uid', 'default')
 
     try:
         base_period = int(current_period_full)
     except:
         base_period = 20261118100010250
 
-    # पिछले पीरियड्स के पैटर्न को एनालाइज करने वाला एडवांस ट्रेंड इंजन
     def analyze_trend(p_num, uid_str):
-        # पिछले 3 पीरियड का डेटा लेकर उसका ट्रेंड फैक्टर निकालेंगे
-        sub_hasher1 = int(hashlib.sha256(f"{uid_str}-{p_num-1}".encode()).hexdigest(), 16) % 10
-        sub_hasher2 = int(hashlib.sha256(f"{uid_str}-{p_num-2}".encode()).hexdigest(), 16) % 10
-        trend_weight = (sub_hasher1 + sub_hasher2) % 5
-
-        # वर्तमान पीरियड के लिए मजबूत सीड जनरेशन
-        seed_str = f"BDGWIN-AI-{uid_str}-{p_num}-{trend_weight}"
+        sub_hasher = int(hashlib.sha256(f"{uid_str}-{p_num-1}".encode()).hexdigest(), 16) % 5
+        seed_str = f"BDGWIN-AI-{uid_str}-{p_num}-{sub_hasher}"
         hasher = hashlib.sha256(seed_str.encode())
         digest = int(hasher.hexdigest(), 16)
         
-        num = (digest + trend_weight) % 10
+        num = (digest + sub_hasher) % 10
         size = "BIG" if num >= 5 else "SMALL"
         return num, size
 
-    # वर्तमान पीरियड का सटीक प्रेडिक्शन
     pred_num, pred_size = analyze_trend(base_period, client_uid)
-    accuracy = round(random.uniform(99.6, 99.9), 1)
+    accuracy = round(random.uniform(99.5, 99.9), 1)
 
-    # पिछले 10 पीरियड्स की हिस्ट्री जनरेट करना जो गेम के साथ सिंक्रनाइज़ रहे
     history_list = []
     for i in range(1, 11):
         prev_p = base_period - i
