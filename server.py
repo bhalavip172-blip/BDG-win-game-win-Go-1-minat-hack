@@ -15,7 +15,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDGWin Live Overlay Analyzer</title>
+    <title>BDGWin Smart Floating AI Analyzer</title>
     <style>
         * {
             box-sizing: border-box;
@@ -31,7 +31,7 @@ HTML_TEMPLATE = """
             background: #090d16;
         }
 
-        /* बैकग्राउंड में गेम चलाने के लिए Iframe */
+        /* बैकग्राउंड में गेम लोड करने के लिए Iframe */
         #gameFrame {
             position: fixed;
             top: 0;
@@ -42,25 +42,25 @@ HTML_TEMPLATE = """
             z-index: 1;
         }
 
-        /* फ्लोटिंग पैनल जो गेम के ऊपर तैरता रहेगा */
+        /* फ्लोटिंग और ड्रैगेबल पैनल जो गेम के ऊपर तैरता रहेगा */
         #panel {
             position: absolute;
-            top: 30px;
-            left: 30px;
-            width: 330px;
-            background: rgba(13, 20, 38, 0.92);
-            backdrop-filter: blur(12px);
+            top: 40px;
+            left: 40px;
+            width: 340px;
+            background: rgba(13, 20, 38, 0.95);
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(56, 189, 248, 0.5);
             border-radius: 16px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.3);
             color: #ffffff;
-            z-index: 9999; /* गेम के ऊपर रखने के लिए सबसे ज्यादा z-index */
+            z-index: 9999; /* गेम के ऊपर दिखाने के लिए */
             user-select: none;
             transition: transform 0.1s ease;
         }
 
         .panel-header {
-            padding: 10px 14px;
+            padding: 12px 16px;
             background: linear-gradient(135deg, #0284c7, #1d4ed8);
             border-top-left-radius: 15px;
             border-top-right-radius: 15px;
@@ -69,7 +69,7 @@ HTML_TEMPLATE = """
             justify-content: space-between;
             align-items: center;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 13px;
             letter-spacing: 0.5px;
         }
 
@@ -79,7 +79,7 @@ HTML_TEMPLATE = """
             color: white;
             cursor: pointer;
             font-size: 14px;
-            margin-left: 6px;
+            margin-left: 8px;
             transition: opacity 0.2s;
         }
 
@@ -88,12 +88,12 @@ HTML_TEMPLATE = """
         }
 
         .panel-body {
-            padding: 12px;
+            padding: 14px;
         }
 
         /* UID कनेक्शन सेक्शन */
         .uid-section {
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             display: flex;
             gap: 6px;
         }
@@ -102,8 +102,8 @@ HTML_TEMPLATE = """
             flex: 1;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            padding: 5px 8px;
+            border-radius: 8px;
+            padding: 6px 10px;
             color: #fff;
             font-size: 11px;
             outline: none;
@@ -117,8 +117,8 @@ HTML_TEMPLATE = """
             background: #10b981;
             border: none;
             color: white;
-            padding: 5px 8px;
-            border-radius: 6px;
+            padding: 6px 10px;
+            border-radius: 8px;
             font-size: 11px;
             font-weight: bold;
             cursor: pointer;
@@ -130,9 +130,9 @@ HTML_TEMPLATE = """
         }
 
         #uidStatus {
-            font-size: 9px;
+            font-size: 10px;
             color: #10b981;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             display: none;
             font-weight: 600;
         }
@@ -140,10 +140,10 @@ HTML_TEMPLATE = """
         .info-box {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 6px;
-            padding: 6px 8px;
-            margin-bottom: 6px;
-            font-size: 11px;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            font-size: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -155,55 +155,56 @@ HTML_TEMPLATE = """
 
         #analyzeStatus {
             text-align: center;
-            font-size: 10px;
+            font-size: 11px;
             color: #f59e0b;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             font-weight: 600;
-            min-height: 14px;
+            letter-spacing: 0.5px;
+            min-height: 16px;
         }
 
         .result-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-bottom: 6px;
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
         .result-card {
             background: rgba(56, 189, 248, 0.05);
             border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: 6px;
-            padding: 6px;
+            border-radius: 8px;
+            padding: 8px;
             text-align: center;
         }
 
         .result-card .label {
-            font-size: 9px;
+            font-size: 10px;
             color: #94a3b8;
             margin-bottom: 2px;
         }
 
         .result-card .value {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
             color: #f8fafc;
         }
 
-        /* पिछले डेटा की हिस्ट्री */
+        /* पिछले 10 डेटा की हिस्ट्री बॉक्स */
         .history-container {
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 6px;
-            padding: 5px;
-            margin-bottom: 6px;
-            max-height: 85px;
+            border-radius: 8px;
+            padding: 6px;
+            margin-bottom: 8px;
+            max-height: 95px;
             overflow-y: auto;
         }
 
         .history-title {
-            font-size: 9px;
+            font-size: 10px;
             color: #94a3b8;
-            margin-bottom: 3px;
+            margin-bottom: 4px;
             text-align: center;
             font-weight: bold;
         }
@@ -211,9 +212,9 @@ HTML_TEMPLATE = """
         .history-item {
             display: flex;
             justify-content: space-between;
-            font-size: 9px;
-            padding: 2px 4px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 10px;
+            padding: 3px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .history-item:last-child {
@@ -223,11 +224,11 @@ HTML_TEMPLATE = """
         .footer-info {
             display: flex;
             justify-content: space-between;
-            font-size: 10px;
+            font-size: 11px;
             color: #cbd5e1;
             background: rgba(0, 0, 0, 0.3);
-            padding: 5px 8px;
-            border-radius: 6px;
+            padding: 6px 10px;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -239,7 +240,7 @@ HTML_TEMPLATE = """
     <!-- फ्लोटिंग प्रेडिक्शन पैनल जो गेम के ऊपर तैरता रहेगा -->
     <div id="panel">
         <div class="panel-header" id="panelHeader">
-            <span>⚡ BDGWin Floating AI</span>
+            <span>⚡ BDGWin Floating AI Analyzer</span>
             <div class="controls">
                 <button onclick="changeSize(0.1)">+</button>
                 <button onclick="changeSize(-0.1)">-</button>
@@ -253,42 +254,43 @@ HTML_TEMPLATE = """
                 <input type="text" id="uidInput" placeholder="Enter Game UID">
                 <button onclick="connectUID()">Link</button>
             </div>
-            <div id="uidStatus">✓ UID Linked</div>
+            <div id="uidStatus">✓ UID Linked Successfully</div>
 
             <div class="info-box">
-                <span>Period:</span>
-                <strong id="prdDisplay" style="font-size: 10px; color: #38bdf8;">Loading...</strong>
+                <span>Current Period:</span>
+                <strong id="prdDisplay" style="font-size: 11px; color: #38bdf8;">Loading...</strong>
             </div>
 
-            <div id="analyzeStatus">⚡ AI Ready</div>
+            <div id="analyzeStatus">⚡ AI Ready for Scan</div>
 
             <div class="result-grid">
                 <div class="result-card">
-                    <div class="label">SIZE</div>
+                    <div class="label">PREDICTED SIZE</div>
                     <div class="value" id="predSize">--</div>
                 </div>
                 <div class="result-card">
-                    <div class="label">NUMBER</div>
+                    <div class="label">LUCKY NUMBER</div>
                     <div class="value" id="predNumber" style="color: #38bdf8;">--</div>
                 </div>
             </div>
 
-            <!-- पिछले डेटा की हिस्ट्री -->
+            <!-- पिछले 10 लाइव डेटा की हिस्ट्री -->
             <div class="history-container">
-                <div class="history-title">-- RECENT ANALYZED DATA --</div>
+                <div class="history-title">-- RECENT ANALYZED DATA (LAST 10) --</div>
                 <div id="historyList">
-                    <div style="text-align:center; color:#64748b; font-size:9px;">Waiting...</div>
+                    <div style="text-align:center; color:#64748b; font-size:9px;">Waiting for scan...</div>
                 </div>
             </div>
 
             <div class="footer-info">
                 <span>Timer: <b id="secTime" style="color: #f43f5e;">60s</b></span>
-                <span>Acc: <b id="accuracy" style="color: #10b981;">--%</b></span>
+                <span>Accuracy: <b id="accuracy" style="color: #10b981;">--%</b></span>
             </div>
         </div>
     </div>
 
     <script>
+        // पैनल को स्क्रीन पर कहीं भी खींचने (Drag) के लिए
         const panel = document.getElementById('panel');
         const header = document.getElementById('panelHeader');
         let isDragging = false, startX, startY;
@@ -325,6 +327,7 @@ HTML_TEMPLATE = """
             body.style.display = body.style.display === 'none' ? 'block' : 'none';
         }
 
+        // पैनल छोटा-बड़ा करने का फंक्शन (+ और - बटन)
         let currentScale = 1.0;
         function changeSize(amount) {
             currentScale += amount;
@@ -372,8 +375,7 @@ HTML_TEMPLATE = """
             if (livePeriod !== lastFetchedPeriod) {
                 lastFetchedPeriod = livePeriod;
                 
-                document.getElementById('analyzeStatusinnerHTML = "🔄 Analyzing trends...";' // syntax check
-                document.getElementById('analyzeStatus').innerHTML = "🔄 Analyzing trends...";
+                document.getElementById('analyzeStatus').innerHTML = "🔄 Analyzing past data trends...";
                 document.getElementById('predSize').innerText = "...";
                 document.getElementById('predNumber').innerText = "...";
 
@@ -385,7 +387,7 @@ HTML_TEMPLATE = """
                     })
                     .then(response => response.json())
                     .then(data => {
-                        document.getElementById('analyzeStatus').innerHTML = "✨ Ready!";
+                        document.getElementById('analyzeStatus').innerHTML = "✨ Accurate Prediction Ready!";
                         document.getElementById('predSize').innerText = data.size;
                         document.getElementById('predNumber').innerText = data.number;
                         document.getElementById('accuracy').innerText = data.accuracy + '%';
@@ -394,9 +396,9 @@ HTML_TEMPLATE = """
                     })
                     .catch(err => {
                         console.error("Error:", err);
-                        document.getElementById('analyzeStatus').innerHTML = "⚠ Error!";
+                        document.getElementById('analyzeStatus').innerHTML = "⚠ Error fetching prediction!";
                     });
-                }, 1000);
+                }, 1200);
             }
         }
 
@@ -412,6 +414,7 @@ HTML_TEMPLATE = """
             });
         }
 
+        // 60-सेकंड का लाइव टाइमर
         setInterval(() => {
             let secNow = new Date().getSeconds();
             let timeLeft = 60 - secNow;
@@ -450,6 +453,7 @@ def get_prediction():
     except:
         base_num = 20261108100010289
 
+    # पिछले डेटा और UID के आधार पर ट्रेंड एनालाइज़र एल्गोरिदम
     trend_modifier = 0
     if len(past_results_log) >= 3:
         recent_sum = sum(item['number'] for item in past_results_log[-3:])
